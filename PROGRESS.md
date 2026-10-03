@@ -14,12 +14,12 @@ builds everything once pushes work.
 
 ## Milestones
 - [x] M0 Gradle scaffold, version catalog, CI workflow
-- [ ] M1 `:core` models + complete seed data (exercises, steps, tempos, highlights, cues, DO/DON'T, ladders)
-- [ ] M2 `:core` logic: day rotation, deload, session planner/sequencer, superset mode, smart rest
-- [ ] M3 `:core` timers: TimelineTimer, isometric get-ready, tempo, rest, flow; cue to beep/haptic mapping
-- [ ] M4 `:core` analytics: recovery window, weekly volume guard (+15%), streak, heatmap, joint advice, progression gating
+- [x] M1 `:core` models + complete seed data (exercises, steps, tempos, highlights, cues, DO/DON'T, ladders)
+- [x] M2 `:core` logic: day rotation, deload, session planner/sequencer, superset mode, smart rest
+- [x] M3 `:core` timers: TimelineTimer, isometric get-ready, tempo, rest, flow; cue to beep/haptic mapping
+- [x] M4 `:core` analytics: recovery window, weekly volume guard (+15%), streak, heatmap, joint advice, progression gating
 - [ ] M5 `:core` 3D body rig (IK, projections, highlights) + PNG preview tool, poses for every exercise
-- [ ] M6 `:core` unit tests for M1-M5 (run locally via shim runner)
+- [ ] M6 `:core` unit tests for M1-M5 (M1-M4 done: 62 tests passing via tools/run-core-tests.sh; rig tests pending)
 - [ ] M7 `:app` data layer (Room entities, DAOs, repository, seeding of user state)
 - [ ] M8 `:app` feedback (audio ducking beeps, haptics) + foreground service + wake lock + session controller
 - [ ] M9 `:app` theme + navigation + Tab 1 Dashboard
