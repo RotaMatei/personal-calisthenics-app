@@ -20,7 +20,7 @@ builds everything once pushes work.
 - [x] M4 `:core` analytics: recovery window, weekly volume guard (+15%), streak, heatmap, joint advice, progression gating
 - [x] M5 `:core` 3D body rig (IK, projections, highlights) + PNG preview tool (`tools/render-rig.sh`), poses for every
       exercise (all 27 animations and every DO/DON'T still, basic capsule-mannequin fidelity; fidelity upgrades are M5b-M5d)
-- [ ] M5b **User requirement (added 2026-10-03): exercise visualizations are short looping 3D-rendered clips of a
+- [x] M5b **User requirement (added 2026-10-03): exercise visualizations are short looping 3D-rendered clips of a
       humanoid doing the exercise, not static pictures.** Plan: perspective camera with yaw/pitch (default 3/4 view,
       slow auto-orbit, drag to rotate, tap to switch to the spec's side/front views) over the existing 3D-authored rig;
       shaded capsule/sphere "impostor" bodies with depth-correct painter's sorting; the clip plays the full rep
@@ -34,7 +34,7 @@ builds everything once pushes work.
       `docs/STRESS_MAP.md`. DONE 2026-10-03: `Highlight.load` (Primary/Secondary/Minor) + `Highlight.peak` (Steady/A/B),
       `RigAnimation.progressAt`, soft-edged patches, all 27 exercises audited, `StressMapTest`. Caveat to state in the app: this is a general biomechanics / rehab-literature mapping, not
       measured data for this user, and not medical advice.
-- [ ] M5d **User requirement (added 2026-10-03): the 3D models must be more detailed for every exercise.** Example
+- [x] M5d **User requirement (added 2026-10-03): the 3D models must be more detailed for every exercise.** Example
       from the user: the hand-on-bar grip close-up is not understandable (cannot tell which parts are fingers). The current
       figure is a simple capsule mannequin and the grip art is a crude schematic. To do: (1) a detailed humanoid for the
       clips: tapered torso with chest/pelvis/abdomen shapes, neck, jaw/face, shoulders with deltoid bulge, upper arm and
@@ -44,7 +44,7 @@ builds everything once pushes work.
       squats), drawn as a proper 3D hand with labelled callouts (fingers, thumb, bar, palm crease); (3) labels and arrows on
       the DO/DON'T art so each picture can be read without guessing; (4) review every exercise sheet by eye for clarity.
 - [x] M6 `:core` unit tests for M1-M5 (73 tests passing via tools/run-core-tests.sh; add tests for M5b-M5d as they land)
-- [ ] M7 `:app` data layer (Room entities, DAOs, repository, seeding of user state)
+- [x] M7 `:app` data layer (Room entities, DAOs, repository, seeding of user state)
 - [ ] M8 `:app` feedback (audio ducking beeps, haptics) + foreground service + wake lock + session controller
 - [ ] M9 `:app` theme + navigation + Tab 1 Dashboard
 - [ ] M10 `:app` Tab 2 Workout Player (flow, isometric, tempo, rest, set logging, cold mode, finish + joint log)
@@ -59,7 +59,7 @@ builds everything once pushes work.
   "Build debug APK" fails until the :app sources exist. CI logs cannot be downloaded (egress); use
   `gh run view <id> --json jobs` and `gh api repos/RotaMatei/personal-calisthenics-app/check-runs/<job id>/annotations`.
 
-## Status of M5b / M5d (2026-10-03)
+## Status of M5b / M5d (2026-10-03) - DONE; contact sheets reviewed by eye 2026-10-03 (pull-up, pistol, planche, L-sit OK; labelled DO/DON'T present). M7 data layer compiled green in CI.
 - Done: 3D rig pipeline (orbit camera, painter, ellipsoid body, 4-finger hands with bar wrap, grip close-ups), bar/floor hand
   contact re-authored, smooth torso, graded highlights.
 - Still open: eyeball every exercise from 3/4, side and front once more (pull-up WRONG poses were authored for the old bar
