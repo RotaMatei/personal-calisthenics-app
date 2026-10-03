@@ -55,7 +55,7 @@ builds everything once pushes work.
 - [x] M12 `:app` Tab 4 Stats (heatmap, safety guard, charts, joint history) (written 2026-10-03; CI compile pending)
 - [x] M13 Spec audit against `docs/SPEC.md`, fix gaps, README with build/install steps (audit 2026-10-03: added beep/vibration
       toggles, weekday label, keep-screen-on for the whole session, abandoned-session cleanup; all spec sections covered)
-- [ ] M14 CI green (needs GitHub push access) and debug APK artifact produced
+- [x] M14 CI green (needs GitHub push access) and debug APK artifact produced (green on 2026-10-03: run 37161308156, artifact calisthenics-debug-apk)
 
 ## Auto-resume
 - Scheduled task "Calisthenics app auto-resume" (trig_01NAmLe2tPTDAtFJZ7zbnBqD) starts a fresh session hourly at :48 and
