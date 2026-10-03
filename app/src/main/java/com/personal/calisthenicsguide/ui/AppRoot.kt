@@ -35,6 +35,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.personal.calisthenicsguide.CalisthenicsApp
 import com.personal.calisthenicsguide.ui.dashboard.DashboardScreen
+import com.personal.calisthenicsguide.ui.guide.GuideScreen
 import com.personal.calisthenicsguide.ui.dashboard.DashboardViewModel
 import com.personal.calisthenicsguide.ui.theme.AppColors
 import com.personal.calisthenicsguide.ui.workout.WorkoutScreen
@@ -117,7 +118,7 @@ fun AppRoot() {
                             onStart = ::beginWorkout,
                         )
                     }
-                    Tab.GUIDE -> Placeholder("Guide", "3D exercise clips and the progression matrix arrive with milestone M11.")
+                    Tab.GUIDE -> GuideScreen(repository = app.repository)
                     Tab.STATS -> Placeholder("Stats", "Heatmap, safety guard and charts arrive with milestone M12.")
                 }
             }
