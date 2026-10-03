@@ -21,6 +21,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -30,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -58,6 +60,13 @@ fun AppRoot() {
         var tabIndex by rememberSaveable { mutableIntStateOf(0) }
         val dashboard: DashboardViewModel = viewModel(factory = DashboardViewModel.Factory(app.repository))
         val dashboardState by dashboard.state.collectAsState()
+
+        // Keep the screen on for the whole session; the foreground service keeps timers alive if it is locked anyway.
+        val view = LocalView.current
+        DisposableEffect(runnerState.active) {
+            view.keepScreenOn = runnerState.active
+            onDispose { view.keepScreenOn = false }
+        }
 
         fun startNow() {
             dashboardState?.let { app.sessionRunner.start(it.options) }
@@ -106,6 +115,8 @@ fun AppRoot() {
                         onResumeWorkout = { tabIndex = Tab.WORKOUT.ordinal },
                         onChecklist = dashboard::setChecklist,
                         onColdMode = dashboard::setColdMode,
+                        onSound = dashboard::setSound,
+                        onVibration = dashboard::setVibration,
                         onPickDay = dashboard::overrideDay,
                     )
                     Tab.WORKOUT -> {

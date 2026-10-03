@@ -45,6 +45,8 @@ data class DashboardState(
     val isDeload: Boolean,
     val weeksUntilDeload: Int,
     val coldMode: Boolean,
+    val soundOn: Boolean,
+    val vibrationOn: Boolean,
     val estimateMinutes: IntRange,
     val totalSets: Int,
     val streakWeeks: Int,
@@ -105,6 +107,8 @@ class DashboardViewModel(private val repository: Repository) : ViewModel() {
             isDeload = deload,
             weeksUntilDeload = Deload.weeksUntilDeload(blockStart, today),
             coldMode = cold,
+            soundOn = settings[SettingKeys.SOUND_ON] != "false",
+            vibrationOn = settings[SettingKeys.VIBRATION_ON] != "false",
             estimateMinutes = plan.estimatedMinutes(),
             totalSets = plan.workItems.size,
             streakWeeks = Streaks.weeklyStreak(sessionDates, today),
@@ -124,6 +128,14 @@ class DashboardViewModel(private val repository: Repository) : ViewModel() {
 
     fun setColdMode(on: Boolean) {
         viewModelScope.launch { repository.putSetting(SettingKeys.COLD_MODE, on.toString()) }
+    }
+
+    fun setSound(on: Boolean) {
+        viewModelScope.launch { repository.putSetting(SettingKeys.SOUND_ON, on.toString()) }
+    }
+
+    fun setVibration(on: Boolean) {
+        viewModelScope.launch { repository.putSetting(SettingKeys.VIBRATION_ON, on.toString()) }
     }
 
     /** Pass null to go back to the automatic A -> B -> C rotation. */

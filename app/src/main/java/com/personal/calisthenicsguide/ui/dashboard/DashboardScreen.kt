@@ -46,6 +46,8 @@ fun DashboardScreen(
     onResumeWorkout: () -> Unit,
     onChecklist: (String, Boolean) -> Unit,
     onColdMode: (Boolean) -> Unit,
+    onSound: (Boolean) -> Unit,
+    onVibration: (Boolean) -> Unit,
     onPickDay: (WorkoutDay?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -67,6 +69,7 @@ fun DashboardScreen(
             DeloadCard(state)
             if (state.advice.messages.isNotEmpty()) AdviceCard(state.advice.messages)
             ChecklistCard(state, onChecklist)
+            FeedbackCard(state, onSound, onVibration)
             Spacer(Modifier.height(8.dp))
         }
         // Start button sits at the bottom, directly above the navigation bar, for one-handed chalky taps.
@@ -152,7 +155,10 @@ private fun NextSessionCard(state: DashboardState, onColdMode: (Boolean) -> Unit
             "Day ${state.day.label}" + if (state.isDeload) "  -  Deload" else "",
             style = MaterialTheme.typography.headlineMedium,
         )
-        Text(state.day.focus, style = MaterialTheme.typography.bodyLarge)
+        Text(
+            "Usually ${state.day.nominalWeekday.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.ENGLISH)}s. ${state.day.focus}",
+            style = MaterialTheme.typography.bodyLarge,
+        )
         Text("Pull-up grip: ${state.grip.displayName}", color = AppColors.Cyan, style = MaterialTheme.typography.bodyLarge)
         val range = state.estimateMinutes
         Text(
@@ -256,6 +262,20 @@ private fun ChecklistCard(state: DashboardState, onChecklist: (String, Boolean) 
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun FeedbackCard(state: DashboardState, onSound: (Boolean) -> Unit, onVibration: (Boolean) -> Unit) {
+    SectionCard("Timer feedback", "Short beeps lower your music for a moment instead of pausing it") {
+        Row(Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("Beeps", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+            Switch(checked = state.soundOn, onCheckedChange = onSound)
+        }
+        Row(Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("Vibration", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+            Switch(checked = state.vibrationOn, onCheckedChange = onVibration)
         }
     }
 }
