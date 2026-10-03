@@ -22,7 +22,7 @@ internal object PrepRigs {
         val a = Kit.standing(hands = armsDown)
         val b = Kit.standing(
             hip = Vec3(0f, 91.5f, 0f),
-            hands = sym(36f, 196f, 0f, Poles.UP_OUT, -80f),
+            hands = sym(36f, 196f, 0f, Poles.UP_OUT, -80f, hand = HandShape.OPEN),
             feet = sym(33f, 8f, 0f, Poles.FWD_OUT, 0f, true),
         )
         val wrong = Kit.standing(hands = armsDown)
@@ -64,10 +64,10 @@ internal object PrepRigs {
     // ------------------------------------------------------------------ band dislocates
 
     private fun bandedDislocates(): ExerciseRig {
-        fun p(y: Float, z: Float) = Kit.standing(hands = sym(40f, y, z, Poles.BACK_DOWN, 70f))
+        fun p(y: Float, z: Float) = Kit.standing(hands = sym(40f, y, z, Poles.BACK_DOWN, 70f, hand = HandShape.FIST))
         val low = p(100f, 14f)
         val frontHigh = p(148f, 50f)
-        val overhead = Kit.standing(hands = sym(40f, 195f, 8f, Poles.BACK, -80f))
+        val overhead = Kit.standing(hands = sym(40f, 195f, 8f, Poles.BACK, -80f, hand = HandShape.FIST))
         val behindHigh = p(148f, -50f)
         val behindLow = p(103f, -17f)
         val frames = listOf(
@@ -76,9 +76,9 @@ internal object PrepRigs {
         )
         val wrong = Kit.standing(
             hip = Vec3(0f, Kit.STAND_HIP_Y, 5f), lean = -8f, flex = -9f,
-            hands = sym(30f, 186f, -6f, Poles.OUT_BACK, -70f),
+            hands = sym(30f, 186f, -6f, Poles.OUT_BACK, -70f, hand = HandShape.FIST),
         )
-        val right = Kit.standing(hands = sym(40f, 195f, 8f, Poles.BACK, -80f))
+        val right = Kit.standing(hands = sym(40f, 195f, 8f, Poles.BACK, -80f, hand = HandShape.FIST))
         return ExerciseRig(
             RigAnimation(bandScene, frames),
             mapOf(
@@ -91,11 +91,11 @@ internal object PrepRigs {
     // ------------------------------------------------------------------ band pull-aparts
 
     private fun bandPullAparts(): ExerciseRig {
-        val a = Kit.standing(shrug = -1f, hands = sym(14f, 147f, 52f, Poles.OUT_DOWN, 0f), head = 3f)
-        val b = Kit.standing(shrug = -2f, hands = sym(72f, 147f, 12f, Poles.BACK, 0f), head = 3f)
+        val a = Kit.standing(shrug = -1f, hands = sym(14f, 147f, 52f, Poles.OUT_DOWN, 0f, hand = HandShape.FIST), head = 3f)
+        val b = Kit.standing(shrug = -2f, hands = sym(72f, 147f, 12f, Poles.BACK, 0f, hand = HandShape.FIST), head = 3f)
         val wrong = Kit.standing(
             hip = Vec3(0f, Kit.STAND_HIP_Y, 4f), lean = -7f, flex = -7f, shrug = 6f,
-            hands = sym(72f, 150f, 8f, Poles.BACK, 0f), head = 6f,
+            hands = sym(72f, 150f, 8f, Poles.BACK, 0f, hand = HandShape.FIST), head = 6f,
         )
         return ExerciseRig(
             RigAnimation(bandScene, listOf(kf(a, 300, 900), kf(b, 800, 900))),

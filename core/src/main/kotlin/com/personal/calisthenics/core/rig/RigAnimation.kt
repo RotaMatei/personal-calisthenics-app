@@ -40,6 +40,17 @@ class RigAnimation(val scene: RigScene, val keyframes: List<Keyframe>) {
     /** The keyframe pose that differs most from the first one (the "end of range" for a rep). */
     fun endPose(): Pose = keyframes.drop(1).maxByOrNull { distance(keyframes.first().pose, it.pose) }!!.pose
 
+    private val spanToEnd: Float by lazy { distance(keyframes.first().pose, endPose()) }
+
+    /**
+     * How far the clip is from Position A (0) to the end-of-range Position B (1) at [timeMs]; it drives how strongly
+     * each anatomy highlight is drawn (see [com.personal.calisthenics.core.model.Highlight.strengthAt]).
+     */
+    fun progressAt(timeMs: Long): Float {
+        if (spanToEnd < 1e-3f) return 0f
+        return (distance(keyframes.first().pose, poseAt(timeMs)) / spanToEnd).coerceIn(0f, 1f)
+    }
+
     private fun distance(a: Pose, b: Pose): Float {
         fun d(x: Limb, y: Limb) = (x.target - y.target).length()
         return d(a.handL, b.handL) + d(a.handR, b.handR) + d(a.footL, b.footL) + d(a.footR, b.footR) +

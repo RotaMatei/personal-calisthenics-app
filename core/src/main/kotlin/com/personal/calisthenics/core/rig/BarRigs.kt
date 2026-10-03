@@ -10,7 +10,10 @@ internal object BarRigs {
     private const val PULL_BAR_Y = 230f
     private const val ROW_BAR_Y = 100f
     private const val DIP_BAR_Y = 112f
-    private const val SUPPORT_WRIST_Y = DIP_BAR_Y + 3.5f
+    private const val SUPPORT_WRIST_Y = DIP_BAR_Y + Kit.HOOK_BACK
+    private const val PARALLEL_WRIST_X = 19.5f
+    private const val PARALLEL_BAR_X = PARALLEL_WRIST_X + Kit.HOOK_DROP
+    private const val DIP_WRIST_Z = -3f
 
     private fun post(x: Float, z: Float, top: Float) = Box(Vec3(x - 2.5f, 0f, z - 3f), Vec3(x + 2.5f, top, z + 3f))
 
@@ -20,22 +23,22 @@ internal object BarRigs {
         post(half + 3f, z, y + 4f),
     )
 
-    private val pullScene = RigScene(equipment = crossBar(PULL_BAR_Y))
+    private val pullScene = RigScene(equipment = crossBar(PULL_BAR_Y, z = Kit.HOOK_BACK))
     private val rowScene = RigScene(
-        equipment = crossBar(ROW_BAR_Y) + listOf(Box(Vec3(-35f, 0f, -168f), Vec3(35f, 45f, -118f))),
+        equipment = crossBar(ROW_BAR_Y, z = Kit.HOOK_BACK) + listOf(Box(Vec3(-35f, 0f, -168f), Vec3(35f, 45f, -118f))),
     )
-    private val dipBarScene = RigScene(equipment = crossBar(DIP_BAR_Y, r = 1.8f, half = 30f))
+    private val dipBarScene = RigScene(equipment = crossBar(DIP_BAR_Y, z = DIP_WRIST_Z + Kit.HOOK_DROP, r = 1.8f, half = 30f))
     private val parallelScene = RigScene(
         equipment = listOf(
-            Cylinder(Vec3(-22f, DIP_BAR_Y, -32f), Vec3(-22f, DIP_BAR_Y, 48f), 1.9f),
-            Cylinder(Vec3(22f, DIP_BAR_Y, -32f), Vec3(22f, DIP_BAR_Y, 48f), 1.9f),
-            Box(Vec3(-24.5f, 0f, -36f), Vec3(-19.5f, DIP_BAR_Y, -31f)),
-            Box(Vec3(19.5f, 0f, -36f), Vec3(24.5f, DIP_BAR_Y, -31f)),
-            Box(Vec3(-24.5f, 0f, 46f), Vec3(-19.5f, DIP_BAR_Y, 51f)),
-            Box(Vec3(19.5f, 0f, 46f), Vec3(24.5f, DIP_BAR_Y, 51f)),
+            Cylinder(Vec3(-PARALLEL_BAR_X, DIP_BAR_Y, -32f), Vec3(-PARALLEL_BAR_X, DIP_BAR_Y, 48f), 1.9f),
+            Cylinder(Vec3(PARALLEL_BAR_X, DIP_BAR_Y, -32f), Vec3(PARALLEL_BAR_X, DIP_BAR_Y, 48f), 1.9f),
+            Box(Vec3(-PARALLEL_BAR_X - 2.5f, 0f, -36f), Vec3(-PARALLEL_BAR_X + 2.5f, DIP_BAR_Y, -31f)),
+            Box(Vec3(PARALLEL_BAR_X - 2.5f, 0f, -36f), Vec3(PARALLEL_BAR_X + 2.5f, DIP_BAR_Y, -31f)),
+            Box(Vec3(-PARALLEL_BAR_X - 2.5f, 0f, 46f), Vec3(-PARALLEL_BAR_X + 2.5f, DIP_BAR_Y, 51f)),
+            Box(Vec3(PARALLEL_BAR_X - 2.5f, 0f, 46f), Vec3(PARALLEL_BAR_X + 2.5f, DIP_BAR_Y, 51f)),
         ),
     )
-    private val germanScene = RigScene(equipment = crossBar(160f, z = -30f))
+    private val germanScene = RigScene(equipment = crossBar(161.8f, z = -21.6f))
 
     private fun kf(p: Pose, hold: Long = 500, move: Long = 1100) = Keyframe(p, hold, move)
 
@@ -72,7 +75,7 @@ internal object BarRigs {
     }
 
     /** Shoulder-centre height for straight arms under the pull-up bar. */
-    private fun straightCenter(shrug: Float, barY: Float = PULL_BAR_Y) = barY - 4f - Kit.ARM - shrug
+    private fun straightCenter(shrug: Float, barY: Float = PULL_BAR_Y) = barY - Kit.HOOK_DROP - Kit.ARM - shrug
 
     // ------------------------------------------------------------------ pull-up bar
 
@@ -135,17 +138,18 @@ internal object BarRigs {
         head: Float = 0f,
         look: Float = 0f,
         scene: RigScene = parallelScene,
-        wristX: Float = 22f,
+        wristX: Float = PARALLEL_WRIST_X,
         wristZ: Float = 0f,
         wristY: Float = SUPPORT_WRIST_Y,
         pole: PoleSpec = Poles.OUT_BACK,
+        handYaw: Float = 90f,
         legs: (Vec3) -> Pair<Limb, Limb> = { Kit.legsBent(it) },
     ): Pose {
         val s = Vec3(0f, centerY, centerZ)
         val hip = Kit.hipOf(s, lean, flex)
         return Kit.shoulderPose(
             s, lean, flex, head, shrug, look,
-            hands = sym(wristX, wristY, wristZ, pole, 0f, true),
+            hands = sym(wristX, wristY, wristZ, pole, 0f, true, yaw = handYaw, hand = HandShape.HOOK),
             feet = legs(hip),
         )
     }
@@ -202,9 +206,9 @@ internal object BarRigs {
         fun dip(centerY: Float, shrug: Float, centerZ: Float, lean: Float, flex: Float = 0f, pole: PoleSpec = Poles.BACK, head: Float = 8f) =
             support(
                 centerY, shrug, centerZ, lean, flex, head, scene = dipBarScene,
-                wristX = 22f, wristZ = -3f, wristY = DIP_BAR_Y + 3f, pole = pole,
+                wristX = 22f, wristZ = DIP_WRIST_Z, wristY = SUPPORT_WRIST_Y, handYaw = 0f, pole = pole,
             )
-        val top = dip(supportCenter(-3f, wristY = DIP_BAR_Y + 3f), -3f, -2f, 20f)
+        val top = dip(supportCenter(-3f, wristY = SUPPORT_WRIST_Y), -3f, -2f, 20f)
         val bottom = dip(138f, 0f, 18f, 40f)
         val wrong = dip(141f, 3f, -14f, 4f, flex = 6f, head = 0f)
         return ExerciseRig(
@@ -219,7 +223,7 @@ internal object BarRigs {
     // ------------------------------------------------------------------ low bar
 
     private fun australianPullups(): ExerciseRig {
-        val barWristY = ROW_BAR_Y - 4f
+        val barWristY = ROW_BAR_Y - Kit.HOOK_DROP
         val ankleY = 50f
         fun row(centerY: Float, shrug: Float, reach: Float = 140.8f, hipAbove: Boolean = true, head: Float = 0f, look: Float = 0f): Pose {
             val ankleZ = -140.6f
@@ -229,7 +233,7 @@ internal object BarRigs {
             val lean = Kit.leanFor(s, ankle, 0f, Kit.LEG, hipAbove)
             return Kit.shoulderPose(
                 s, lean, 0f, head, shrug, look,
-                hands = sym(22f, barWristY, 0f, Poles.BACK_DOWN, -90f, true),
+                hands = sym(22f, barWristY, 0f, Poles.BACK_DOWN, -90f, true, hand = HandShape.HOOK),
                 feet = Kit.feet(ankle, 9f, Poles.DOWN, -20f, contact = true),
             )
         }
@@ -254,7 +258,7 @@ internal object BarRigs {
             val feetTarget = Vec3(0f, 8f, hip.z + 14f)
             return Kit.shoulderPose(
                 s, lean, 0f, head, shrug, look,
-                hands = sym(22f, 156f, -30f, Poles.FWD_DOWN, -60f, true),
+                hands = sym(22f, 156f, -30f, Poles.FWD_DOWN, -60f, true, hand = HandShape.HOOK),
                 feet = Kit.feet(feetTarget, 12f, Poles.FWD, 0f, contact = true),
             )
         }
@@ -264,7 +268,7 @@ internal object BarRigs {
         val droppedHip = Kit.hipOf(droppedCenter, 2f)
         val wrong = Kit.shoulderPose(
             droppedCenter, 2f, 0f, 10f, 8f, 0f,
-            hands = sym(22f, 156f, -30f, Poles.FWD_DOWN, -60f, true),
+            hands = sym(22f, 156f, -30f, Poles.FWD_DOWN, -60f, true, hand = HandShape.HOOK),
             feet = Kit.feet(Vec3(0f, 16f, droppedHip.z + 20f), 12f, Poles.FWD, 20f),
         )
         return ExerciseRig(

@@ -1,6 +1,8 @@
 package com.personal.calisthenics.core.seed
 
 import com.personal.calisthenics.core.model.BodyRegion.*
+import com.personal.calisthenics.core.model.Load.*
+import com.personal.calisthenics.core.model.PeakAt.*
 import com.personal.calisthenics.core.model.DoDont
 import com.personal.calisthenics.core.model.Exercise
 import com.personal.calisthenics.core.model.ExerciseKind
@@ -17,9 +19,9 @@ internal object ExerciseSeedPrep {
             category = MovementCategory.MOBILITY,
             kind = ExerciseKind.REPS,
             highlights = listOf(
-                muscle(CALVES, "Springy ankle work"),
-                joint(SHOULDER_JOINT, "Full overhead range"),
-                tendon(ACHILLES, "Light elastic loading"),
+                muscle(CALVES, PRIMARY, STEADY, "Springy ankle work"),
+                joint(SHOULDER_JOINT, SECONDARY, END, "Full overhead range"),
+                tendon(ACHILLES, MINOR, STEADY, "Light elastic loading"),
             ),
             setupCues = listOf(
                 "Stand tall with feet together and arms at your sides.",
@@ -58,11 +60,11 @@ internal object ExerciseSeedPrep {
             category = MovementCategory.MOBILITY,
             kind = ExerciseKind.REPS,
             highlights = listOf(
-                muscle(REAR_DELT, "Gentle rotator-cuff activation"),
-                joint(SHOULDER_JOINT, "Capsule lubrication"),
-                joint(HIP_JOINT, "Hip capsule"),
-                joint(ANKLE_JOINT, "Ankle mobility"),
-                tendon(MEDIAL_ELBOW, "Elbow circles prime the flexor origin"),
+                muscle(REAR_DELT, MINOR, STEADY, "Gentle rotator-cuff activation"),
+                joint(SHOULDER_JOINT, PRIMARY, STEADY, "Capsule lubrication"),
+                joint(HIP_JOINT, SECONDARY, STEADY, "Hip capsule"),
+                joint(ANKLE_JOINT, SECONDARY, STEADY, "Ankle mobility"),
+                tendon(MEDIAL_ELBOW, MINOR, STEADY, "Elbow circles prime the flexor origin"),
             ),
             setupCues = listOf(
                 "Stand tall with soft knees.",
@@ -100,9 +102,9 @@ internal object ExerciseSeedPrep {
             category = MovementCategory.MOBILITY,
             kind = ExerciseKind.REPS,
             highlights = listOf(
-                joint(SHOULDER_JOINT, "Capsule mobility"),
-                muscle(REAR_DELT),
-                muscle(LOWER_TRAPS),
+                joint(SHOULDER_JOINT, PRIMARY, STEADY, "Capsule mobility"),
+                muscle(REAR_DELT, SECONDARY, END),
+                muscle(LOWER_TRAPS, SECONDARY, END),
             ),
             setupCues = listOf(
                 "Hold a light band with a wide grip, thumbs facing each other.",
@@ -141,10 +143,10 @@ internal object ExerciseSeedPrep {
             category = MovementCategory.MOBILITY,
             kind = ExerciseKind.REPS,
             highlights = listOf(
-                muscle(REAR_DELT),
-                muscle(MID_BACK),
-                muscle(LOWER_TRAPS),
-                joint(SHOULDER_JOINT),
+                muscle(REAR_DELT, PRIMARY, END),
+                muscle(MID_BACK, PRIMARY, END),
+                muscle(LOWER_TRAPS, SECONDARY, END),
+                joint(SHOULDER_JOINT, MINOR, STEADY),
             ),
             setupCues = listOf(
                 "Hold a light band at shoulder height, hands shoulder-width apart, arms straight.",
@@ -183,9 +185,9 @@ internal object ExerciseSeedPrep {
             category = MovementCategory.MOBILITY,
             kind = ExerciseKind.REPS,
             highlights = listOf(
-                muscle(FOREARM_FLEXORS, "Finger flexors do the lifting"),
-                tendon(MEDIAL_ELBOW, "Common flexor origin"),
-                joint(WRIST, "Capsule conditioning"),
+                muscle(FOREARM_FLEXORS, PRIMARY, END, "Finger flexors do the lifting"),
+                tendon(MEDIAL_ELBOW, SECONDARY, STEADY, "Common flexor origin"),
+                joint(WRIST, SECONDARY, END, "Capsule conditioning"),
             ),
             setupCues = listOf(
                 "Kneel on all fours with the hands under the shoulders and the fingers spread forward.",
@@ -224,9 +226,10 @@ internal object ExerciseSeedPrep {
             category = MovementCategory.MOBILITY,
             kind = ExerciseKind.REPS,
             highlights = listOf(
-                muscle(FOREARM_EXTENSORS),
-                tendon(LATERAL_ELBOW, "Common extensor origin"),
-                joint(WRIST, "Wrist extension range"),
+                muscle(FOREARM_EXTENSORS, SECONDARY, STEADY, "Stabilise the wrist"),
+                muscle(FOREARM_FLEXORS, SECONDARY, END, "Lengthened as you lean"),
+                tendon(LATERAL_ELBOW, SECONDARY, STEADY, "Common extensor origin"),
+                joint(WRIST, PRIMARY, END, "Wrist extension range"),
             ),
             setupCues = listOf(
                 "Kneel with the palms flat and the fingers pointing forward.",
@@ -265,9 +268,9 @@ internal object ExerciseSeedPrep {
             category = MovementCategory.MOBILITY,
             kind = ExerciseKind.REPS,
             highlights = listOf(
-                muscle(FOREARM_FLEXORS),
-                tendon(MEDIAL_ELBOW, "Golfer's elbow origin"),
-                joint(WRIST),
+                muscle(FOREARM_FLEXORS, PRIMARY, END),
+                tendon(MEDIAL_ELBOW, SECONDARY, END, "Golfer's elbow origin"),
+                joint(WRIST, PRIMARY, END),
             ),
             setupCues = listOf(
                 "Kneel and place the palms down with the fingers pointing back toward your knees.",
@@ -306,9 +309,9 @@ internal object ExerciseSeedPrep {
             category = MovementCategory.MOBILITY,
             kind = ExerciseKind.REPS,
             highlights = listOf(
-                muscle(FOREARM_EXTENSORS),
-                tendon(LATERAL_ELBOW, "Extensor origin"),
-                joint(WRIST, "Dorsal ligaments"),
+                muscle(FOREARM_EXTENSORS, PRIMARY, END),
+                tendon(LATERAL_ELBOW, SECONDARY, END, "Extensor origin"),
+                joint(WRIST, PRIMARY, END, "Dorsal ligaments"),
             ),
             setupCues = listOf(
                 "Kneel and place the backs of the hands flat on the floor with the fingers lightly curled.",
@@ -347,10 +350,10 @@ internal object ExerciseSeedPrep {
             category = MovementCategory.MOBILITY,
             kind = ExerciseKind.HOLD,
             highlights = listOf(
-                muscle(LATS, "Long stretch"),
-                muscle(FOREARM_FLEXORS, "Grip endurance"),
-                tendon(MEDIAL_ELBOW, "Grip load on the flexor origin"),
-                joint(SHOULDER_JOINT, "Capsule decompression"),
+                muscle(LATS, PRIMARY, STEADY, "Long stretch"),
+                muscle(FOREARM_FLEXORS, PRIMARY, STEADY, "Grip endurance"),
+                tendon(MEDIAL_ELBOW, SECONDARY, STEADY, "Grip load on the flexor origin"),
+                joint(SHOULDER_JOINT, SECONDARY, STEADY, "Capsule decompression"),
             ),
             setupCues = listOf(
                 "Use an Active Hook Grip at the base of the fingers with the thumb wrapped.",
@@ -389,10 +392,10 @@ internal object ExerciseSeedPrep {
             category = MovementCategory.PULL,
             kind = ExerciseKind.REPS,
             highlights = listOf(
-                muscle(LOWER_TRAPS),
-                muscle(LATS),
-                muscle(SERRATUS),
-                joint(SHOULDER_JOINT, "Learns to stay packed"),
+                muscle(LOWER_TRAPS, PRIMARY, END),
+                muscle(LATS, SECONDARY, END),
+                muscle(SERRATUS, SECONDARY, END),
+                joint(SHOULDER_JOINT, SECONDARY, END, "Learns to stay packed"),
             ),
             setupCues = listOf(
                 "Hang with straight arms and a hook grip.",
@@ -431,11 +434,11 @@ internal object ExerciseSeedPrep {
             category = MovementCategory.PUSH,
             kind = ExerciseKind.REPS,
             highlights = listOf(
-                muscle(LOWER_TRAPS),
-                muscle(SERRATUS),
-                muscle(TRICEPS, "Isometric lockout"),
-                tendon(MEDIAL_ELBOW, "Locked-elbow loading"),
-                joint(SHOULDER_JOINT),
+                muscle(LOWER_TRAPS, PRIMARY, END),
+                muscle(SERRATUS, PRIMARY, END),
+                muscle(TRICEPS, SECONDARY, STEADY, "Isometric lockout"),
+                tendon(MEDIAL_ELBOW, SECONDARY, STEADY, "Locked-elbow loading"),
+                joint(SHOULDER_JOINT, SECONDARY, STEADY),
             ),
             setupCues = listOf(
                 "Jump up into a straight-arm support with the elbows locked and the bars at hip level.",
@@ -474,10 +477,10 @@ internal object ExerciseSeedPrep {
             category = MovementCategory.PUSH,
             kind = ExerciseKind.REPS,
             highlights = listOf(
-                muscle(SERRATUS, "Protraction"),
-                muscle(PEC_MINOR),
-                muscle(LOWER_TRAPS),
-                joint(SHOULDER_JOINT),
+                muscle(SERRATUS, PRIMARY, END, "Protraction"),
+                muscle(PEC_MINOR, SECONDARY, END),
+                muscle(LOWER_TRAPS, SECONDARY, START),
+                joint(SHOULDER_JOINT, MINOR, STEADY),
             ),
             setupCues = listOf(
                 "Start in a high plank with the hands under the shoulders and the elbows locked.",

@@ -19,7 +19,11 @@ internal object Kit {
     const val STAND_HIP_Y = 94.85f
     const val LEG = 86.9f
     const val ARM = 55.9f
-    const val WRIST_FLOOR = 4.4f
+    const val WRIST_FLOOR = 3.2f
+
+    /** Hooked grip: the wrist sits this far below and behind a bar's axis (see HandRig: bar 9.2 along, 4.4 out of the palm). */
+    const val HOOK_DROP = 9.2f
+    const val HOOK_BACK = 4.4f
     const val ANKLE_FLAT = 8f
     const val PLANK_ANKLE_Y = 20.7f
     const val KNEE_FLOOR_Y = 6.4f
@@ -87,11 +91,11 @@ internal object Kit {
         sym(x, ankle.y, ankle.z, pole, pitch, contact)
 
     fun floorHands(z: Float, x: Float = 19f, y: Float = WRIST_FLOOR, pole: PoleSpec = Poles.OUT_BACK, pitch: Float = 0f) =
-        sym(x, y, z, pole, pitch, true)
+        sym(x, y, z, pole, pitch, true, hand = HandShape.FLAT)
 
     /** Hand limbs hanging from a bar at height [barY] (overhand hook grip, fingers pointing up). */
     fun barHands(barY: Float, z: Float = 0f, x: Float = 22f, pole: PoleSpec = Poles.BACK_DOWN) =
-        sym(x, barY - 4f, z, pole, -90f, true)
+        sym(x, barY - HOOK_DROP, z, pole, -90f, true, hand = HandShape.HOOK)
 
     /** Standing hips with straight legs. */
     fun standing(
@@ -144,13 +148,14 @@ internal object Kit {
         armPole: PoleSpec = Poles.OUT_BACK,
         footPitch: Float = 64f,
         legLen: Float = LEG,
+        handRoll: Float = 0f,
     ): Pose {
         val shoulder = Vec3(0f, centerY(jointY, shrug), jointZ)
         val ankle = ankleBehind(shoulder, ankleY, reach)
         val lean = leanFor(shoulder, ankle, flex, legLen, hipAbove)
         return shoulderPose(
             shoulder, lean, flex, head, shrug, look,
-            hands = sym(handX, wristY, wristZ, armPole, handPitch, true),
+            hands = sym(handX, wristY, wristZ, armPole, handPitch, true, roll = handRoll, hand = HandShape.FLAT),
             feet = feet(ankle, 9f, Poles.DOWN, footPitch, contact = true),
         )
     }
@@ -172,6 +177,7 @@ internal object Kit {
         handPitch: Float = 0f,
         handX: Float = 19f,
         armPole: PoleSpec = Poles.OUT_BACK,
+        handRoll: Float = 0f,
     ): Pose {
         val shoulder = Vec3(0f, centerY(jointY, shrug), jointZ)
         fun hipAt(theta: Float) = Vec3(0f, KNEE_FLOOR_Y + Body.THIGH * kotlin.math.cos(rad(theta)), kneeZ - Body.THIGH * kotlin.math.sin(rad(theta)))
@@ -198,7 +204,7 @@ internal object Kit {
         val ankle = Vec3(0f, KNEE_FLOOR_Y + 0.6f, kneeZ - 43f)
         return shoulderPose(
             shoulder, lean, 0f, head, shrug, look,
-            hands = sym(handX, wristY, wristZ, armPole, handPitch, true),
+            hands = sym(handX, wristY, wristZ, armPole, handPitch, true, roll = handRoll, hand = HandShape.FLAT),
             feet = feet(ankle, 10f, Poles.DOWN, 176f, contact = false),
         )
     }
@@ -208,7 +214,7 @@ internal object Kit {
         feet(Vec3(0f, hip.y - dropY, hip.z - backZ), x, Poles.FWD_DOWN, pitch)
 
     /** Straight legs hanging below the hip. */
-    fun legsHang(hip: Vec3, fwd: Float = 0f, x: Float = 9f, pitch: Float = 70f): Pair<Limb, Limb> {
+    fun legsHang(hip: Vec3, fwd: Float = 0f, x: Float = 9f, pitch: Float = 50f): Pair<Limb, Limb> {
         val drop = sqrt(LEG * LEG - fwd * fwd)
         return feet(Vec3(0f, hip.y - drop, hip.z + fwd), x, Poles.FWD, pitch)
     }

@@ -46,19 +46,25 @@ internal object FigureBuilder {
 
     private fun torso(sk: Skeleton): Group3 {
         val parts = mutableListOf<Part3>()
-        // Pelvis in shorts, waist and ribcage in a tank top.
+        // Pelvis in shorts, then a smooth tank-top torso built from overlapping slices (waist narrows, chest widens).
         parts += Part3(
-            Ellip3(sk.hip + sk.lowUp * 3.5f, X * 14.6f, sk.lowUp * 10.5f, sk.lowFront * 11.2f),
+            Ellip3(sk.hip + sk.lowUp * 3.5f, X * 14.6f, sk.lowUp * 10.5f, sk.lowFront * 11.0f),
             Material.SHORTS, shine = false, bias = -60f,
         )
-        parts += Part3(
-            Ellip3(lerp(sk.hip, sk.mid, 0.78f), X * 12.6f, sk.lowUp * 9.5f, sk.lowFront * 9.8f),
-            Material.SHIRT, shine = false, bias = -30f,
-        )
-        parts += Part3(
-            Ellip3(lerp(sk.mid, sk.shoulder, 0.42f), X * 16.0f, sk.up * 15.6f, sk.front * 11.8f),
-            Material.SHIRT, bias = -20f,
-        )
+        val slices = 11
+        for (i in 0 until slices) {
+            val t = 0.20f + 0.70f * i / (slices - 1)
+            val k = i / (slices - 1).toFloat()
+            val c = lerp(sk.hip, sk.mid, 0f).let { _ ->
+                // Follow the two-segment spine: first segment hip -> mid, second mid -> shoulder.
+                if (t < 0.5f) lerp(sk.hip, sk.mid, t / 0.5f) else lerp(sk.mid, sk.shoulder, (t - 0.5f) / 0.5f)
+            }
+            val upv = if (t < 0.5f) sk.lowUp else sk.up
+            val fr = if (t < 0.5f) sk.lowFront else sk.front
+            val rx = 12.4f + 3.8f * k
+            val rz = 9.6f + 2.2f * k
+            parts += Part3(Ellip3(c, X * rx, upv * 9.0f, fr * rz), Material.SHIRT, shine = i == slices - 1, bias = -30f + i * 0.5f)
+        }
         // Trapezius slope from the neck to each shoulder.
         val neckBase = sk.shoulder + sk.up * 1.5f
         parts += Part3(Tube3(neckBase, sk.shoulderL + Vec3(1.5f, -1.2f, 0f), 4.4f, 3.8f), Material.SKIN, shine = false, bias = -10f)
@@ -86,7 +92,7 @@ internal object FigureBuilder {
 
         // Hair: behind the skull from the front, over its back and top from the side.
         val hairParts = listOf(
-            Part3(Ellip3(c + faceUp * 1.7f - faceFront * 1.8f, X * 8.2f, faceUp * 10.4f, faceFront * 9.4f), Material.HAIR, shine = false),
+            Part3(Ellip3(c + faceUp * 1.9f - faceFront * 2.9f, X * 8.1f, faceUp * 10.3f, faceFront * 7.4f), Material.HAIR, shine = false),
         )
         val toCamera = cam.toCamera
         val frontOn = toCamera.dot(faceFront) > 0.35f
@@ -142,8 +148,10 @@ internal object FigureBuilder {
     // ------------------------------------------------------------------ hands
 
     private fun hand(id: String, limb: Limb, wrist: Vec3, right: Boolean, scene: RigScene, cam: Camera): List<Group3> {
-        val frame = HandRig.frame(limb, wrist, right)
-        val (shape, bar) = resolveGrip(limb, frame, wrist, scene)
+        // A relaxed arm hanging at the side turns its palm toward the thigh.
+        val l = if (limb.hand == HandShape.AUTO && limb.roll == 0f && !limb.contact && limb.pitch in 45f..135f) limb.copy(roll = -90f) else limb
+        val frame = HandRig.frame(l, wrist, right)
+        val (shape, bar) = resolveGrip(l, frame, wrist, scene)
         return HandRig.build(id, frame, shape, bar, right, toCamera = cam.toCamera)
     }
 
@@ -152,7 +160,7 @@ internal object FigureBuilder {
         return when (limb.hand) {
             HandShape.AUTO -> when {
                 bar != null -> HandShape.HOOK to bar
-                limb.contact && wrist.y < 9f -> HandShape.FLAT to null
+                limb.contact && wrist.y < 14f -> HandShape.FLAT to null
                 else -> HandShape.RELAXED to null
             }
             HandShape.HOOK -> HandShape.HOOK to bar

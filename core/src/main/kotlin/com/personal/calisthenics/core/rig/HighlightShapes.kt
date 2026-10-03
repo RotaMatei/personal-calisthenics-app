@@ -7,7 +7,19 @@ import com.personal.calisthenics.core.model.HighlightKind
 /** One anatomy highlight to draw: which region, in which colour family, and how strongly (0..1) right now. */
 data class HighlightDraw(val region: BodyRegion, val kind: HighlightKind, val intensity: Float = 0.6f)
 
-fun List<Highlight>.toDraws(intensity: Float = 0.6f): List<HighlightDraw> = map { HighlightDraw(it.region, it.kind, intensity) }
+/**
+ * Highlights as draw requests. [progress] is how far the clip is from Position A (0) to Position B (1), so each
+ * highlight pulses toward its own peak; null (a still picture) shows every highlight at its peak strength.
+ */
+fun List<Highlight>.toDraws(progress: Float? = null): List<HighlightDraw> =
+    map { HighlightDraw(it.region, it.kind, it.strengthAt(progress)) }
+
+/** The same shape with every radius multiplied by [k] (axes and centres unchanged). */
+internal fun Shape3.scaled(k: Float): Shape3 = when (this) {
+    is Sphere3 -> Sphere3(c, r * k)
+    is Tube3 -> Tube3(a, b, ra * k, rb * k)
+    is Ellip3 -> Ellip3(c, ax * k, ay * k, az * k)
+}
 
 /**
  * A patch of colour on a body part. [host] is the id of the body group it sits on, [axis] the point on that part's
@@ -102,6 +114,13 @@ internal object HighlightShapes {
         }
     }
 
+    /** A patch with a soft edge: a wide faint halo, a mid layer and a small strong core, blended together. */
+    private fun softPatch(shape: Shape3, material: Material, alpha: Float): List<Part3> = listOf(
+        Part3(shape.scaled(1.22f), material, shine = false, alpha = alpha * 0.35f),
+        Part3(shape, material, shine = false, alpha = alpha * 0.55f),
+        Part3(shape.scaled(0.62f), material, shine = false, alpha = alpha * 0.8f),
+    )
+
     fun material(kind: HighlightKind): Material = when (kind) {
         HighlightKind.MUSCLE -> Material.MUSCLE
         HighlightKind.TENDON -> Material.TENDON
@@ -117,7 +136,8 @@ internal object HighlightShapes {
         var n = 0
         for (d in draws) {
             val material = material(d.kind)
-            val alpha = (0.30f + 0.55f * d.intensity.coerceIn(0f, 1f))
+            // Overall opacity grows with load x phase; faint, minor or off-peak highlights stay clearly lighter.
+            val alpha = 0.10f + 0.70f * d.intensity.coerceIn(0f, 1f)
             for (h in shapes(d.region, sk)) {
                 val centre = when (val s = h.shape) {
                     is Sphere3 -> s.c
@@ -129,7 +149,7 @@ internal object HighlightShapes {
                 val id = "hl.${n++}"
                 out += Group3(
                     id,
-                    listOf(Part3(h.shape, material, shine = false, alpha = alpha)),
+                    softPatch(h.shape, material, alpha),
                     outline = false,
                     relativeTo = h.host,
                     rel = if (near) 0.003f else -0.003f,
@@ -138,7 +158,7 @@ internal object HighlightShapes {
                 if (xray && !near) {
                     out += Group3(
                         "$id.x",
-                        listOf(Part3(h.shape, material, shine = false, alpha = alpha * 0.4f)),
+                        softPatch(h.shape, material, alpha * 0.4f),
                         outline = false,
                         relativeTo = Painter.TOP,
                         rel = 0f,

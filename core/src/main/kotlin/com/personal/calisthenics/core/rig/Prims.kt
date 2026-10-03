@@ -116,9 +116,9 @@ object Palette {
             Layer.OUTLINE -> Triple(r0, g0, b0)
             Layer.FILL -> Triple(scale(r0, tone), scale(g0, tone), scale(b0, tone))
             Layer.SHINE -> Triple(
-                scale(mix(r0, 255, 0.34f), tone),
-                scale(mix(g0, 255, 0.34f), tone),
-                scale(mix(b0, 255, 0.34f), tone),
+                scale(mix(r0, 255, 0.22f), tone),
+                scale(mix(g0, 255, 0.22f), tone),
+                scale(mix(b0, 255, 0.22f), tone),
             )
         }
         val a = (alpha.coerceIn(0f, 1f) * 255f + 0.5f).toInt()

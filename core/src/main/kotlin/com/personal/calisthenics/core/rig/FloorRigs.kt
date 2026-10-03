@@ -51,9 +51,9 @@ internal object FloorRigs {
     }
 
     private fun palmsBackFlexorStretch(): ExerciseRig {
-        val a = Kit.kneeling(jointY = armY(0f), jointZ = 52f, wristZ = 52f, handPitch = 180f)
-        val b = Kit.kneeling(jointY = 45.5f, jointZ = 15f, wristZ = 52f, handPitch = 180f, head = 10f)
-        val wrong = Kit.kneeling(jointY = 31f, jointZ = 22f, wristZ = 52f, handPitch = 180f, head = 5f, armPole = Poles.OUT_BACK)
+        val a = Kit.kneeling(jointY = armY(0f), jointZ = 52f, wristZ = 52f, handPitch = 180f, handRoll = 180f)
+        val b = Kit.kneeling(jointY = 45.5f, jointZ = 15f, wristZ = 52f, handPitch = 180f, handRoll = 180f, head = 10f)
+        val wrong = Kit.kneeling(jointY = 31f, jointZ = 22f, wristZ = 52f, handPitch = 180f, handRoll = 180f, head = 5f, armPole = Poles.OUT_BACK)
         return ExerciseRig(
             RigAnimation(floor, listOf(kf(a, 300, 1200), kf(b, 700, 1200))),
             mapOf(
@@ -64,9 +64,9 @@ internal object FloorRigs {
     }
 
     private fun dorsalWristPushups(): ExerciseRig {
-        val light = Kit.kneeling(jointY = armY(0f), jointZ = 10.3f, wristZ = 10.3f, handPitch = 0f, wristY = 6f, head = 18f)
-        val more = Kit.kneeling(jointY = armY(7.7f, 6f), jointZ = 18f, wristZ = 10.3f, handPitch = 0f, wristY = 6f, head = 18f)
-        val wrong = Kit.kneeling(jointY = armY(12f, 6f), jointZ = 64f, wristZ = 52f, wristY = 6f, head = 14f)
+        val light = Kit.kneeling(jointY = armY(0f), jointZ = 10.3f, wristZ = 10.3f, handPitch = 180f, wristY = 6f, head = 18f)
+        val more = Kit.kneeling(jointY = armY(7.7f, 6f), jointZ = 18f, wristZ = 10.3f, handPitch = 180f, wristY = 6f, head = 18f)
+        val wrong = Kit.kneeling(jointY = armY(12f, 6f), jointZ = 64f, wristZ = 52f, wristY = 6f, handPitch = 180f, head = 14f)
         return ExerciseRig(
             RigAnimation(floor, listOf(kf(light, 500, 1000), kf(more, 500, 1000))),
             mapOf(
@@ -128,7 +128,7 @@ internal object FloorRigs {
         val lean = Kit.leanFor(shoulder, ankle, 0f, Kit.LEG, hipAbove = true)
         return Kit.shoulderPose(
             shoulder, lean, 0f, head, shrug, look,
-            hands = sym(19f, Kit.WRIST_FLOOR, 0f, pole, 0f, true),
+            hands = sym(19f, Kit.WRIST_FLOOR, 0f, pole, 0f, true, hand = HandShape.FLAT),
             feet = Kit.feet(ankle, 9f, Poles.FWD, 20f, contact = true),
         )
     }

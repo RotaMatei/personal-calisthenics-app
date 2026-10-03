@@ -26,12 +26,13 @@ builds everything once pushes work.
       shaded capsule/sphere "impostor" bodies with depth-correct painter's sorting; the clip plays the full rep
       (keyframes already loop) at the exercise's real tempo. Implemented in `:core` (projection + shading math,
       testable) and drawn by the Compose Canvas in M11. The local GIF/MP4 override from the spec stays as an option.
-- [ ] M5c **User requirement (added 2026-10-03): tension-point colouring must match the real stress of that exact
+- [x] M5c **User requirement (added 2026-10-03): tension-point colouring must match the real stress of that exact
       exercise.** Keep the spec colours (muscle red, tendon blue, joint yellow) but add per-highlight load level
       (primary / secondary / minor, drawn as opacity) and the rep phase where the load peaks (e.g. distal biceps tendon
       peaks in the bottom hang of a pull-up, patellar tendon at the bottom of a pistol squat), so the colours pulse with
       the clip. Audit every exercise's highlights against its real biomechanics and record the rationale per exercise in
-      `docs/STRESS_MAP.md`. Caveat to state in the app: this is a general biomechanics / rehab-literature mapping, not
+      `docs/STRESS_MAP.md`. DONE 2026-10-03: `Highlight.load` (Primary/Secondary/Minor) + `Highlight.peak` (Steady/A/B),
+      `RigAnimation.progressAt`, soft-edged patches, all 27 exercises audited, `StressMapTest`. Caveat to state in the app: this is a general biomechanics / rehab-literature mapping, not
       measured data for this user, and not medical advice.
 - [ ] M5d **User requirement (added 2026-10-03): the 3D models must be more detailed for every exercise.** Example
       from the user: the hand-on-bar grip close-up is not understandable (cannot tell which parts are fingers). The current
@@ -57,6 +58,12 @@ builds everything once pushes work.
   follows this file. GitHub pushes work (App access confirmed 2026-10-03); CI "Core unit tests" passes under real Gradle,
   "Build debug APK" fails until the :app sources exist. CI logs cannot be downloaded (egress); use
   `gh run view <id> --json jobs` and `gh api repos/RotaMatei/personal-calisthenics-app/check-runs/<job id>/annotations`.
+
+## Status of M5b / M5d (2026-10-03)
+- Done: 3D rig pipeline (orbit camera, painter, ellipsoid body, 4-finger hands with bar wrap, grip close-ups), bar/floor hand
+  contact re-authored, smooth torso, graded highlights.
+- Still open: eyeball every exercise from 3/4, side and front once more (pull-up WRONG poses were authored for the old bar
+  geometry), labels/arrows on DO/DON'T art, auto-orbit helper + stable framing + tests for M5b, then the `:app` milestones.
 
 ## Design for M5b/M5d (detailed 3D figure) - in progress
 - Pose gets real hand/foot frames (finger direction, palm normal, toe-out yaw) and hand shapes (relaxed, flat, fist,

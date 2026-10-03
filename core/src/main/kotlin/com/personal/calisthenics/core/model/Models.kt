@@ -90,7 +90,45 @@ enum class BodyRegion(val displayName: String) {
     HIP_JOINT("Hip joint"),
 }
 
-data class Highlight(val region: BodyRegion, val kind: HighlightKind, val note: String = "")
+/** How hard a region works (or how much a tendon / joint is stressed) in one exercise. Drawn as colour strength. */
+enum class Load(val weight: Float, val label: String) {
+    PRIMARY(1.0f, "Primary"),
+    SECONDARY(0.7f, "Secondary"),
+    MINOR(0.4f, "Minor"),
+}
+
+/**
+ * Where in one repetition the load on a region peaks. START is Position A (first keyframe of the clip), END is
+ * Position B (end of range); STEADY means the load is about the same all the way through (holds, stabilisers).
+ */
+enum class PeakAt { STEADY, START, END }
+
+/**
+ * One anatomy highlight: the region, its colour family ([kind]: red muscle, blue tendon, yellow joint), how strongly
+ * it is loaded ([load]) and where in the rep that load peaks ([peak]). The strength drawn at a moment of the clip is
+ * [strengthAt].
+ */
+data class Highlight(
+    val region: BodyRegion,
+    val kind: HighlightKind,
+    val note: String = "",
+    val load: Load = Load.PRIMARY,
+    val peak: PeakAt = PeakAt.STEADY,
+) {
+    /**
+     * Colour strength 0..1 when the clip is [progress] of the way from Position A (0) to Position B (1). A null
+     * progress (a still picture) shows the peak. Off-peak, a highlight fades to 40% of its full strength.
+     */
+    fun strengthAt(progress: Float?): Float {
+        val p = progress?.coerceIn(0f, 1f)
+        val phase = when {
+            p == null || peak == PeakAt.STEADY -> 1f
+            peak == PeakAt.START -> 0.4f + 0.6f * (1f - p)
+            else -> 0.4f + 0.6f * p
+        }
+        return load.weight * phase
+    }
+}
 
 /** A visual "DO vs DON'T" card. Pose keys refer to entries in the rig library. */
 data class DoDont(

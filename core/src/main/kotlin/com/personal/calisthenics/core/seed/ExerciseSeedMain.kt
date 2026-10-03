@@ -1,6 +1,8 @@
 package com.personal.calisthenics.core.seed
 
 import com.personal.calisthenics.core.model.BodyRegion.*
+import com.personal.calisthenics.core.model.Load.*
+import com.personal.calisthenics.core.model.PeakAt.*
 import com.personal.calisthenics.core.model.DoDont
 import com.personal.calisthenics.core.model.Exercise
 import com.personal.calisthenics.core.model.ExerciseKind
@@ -17,12 +19,12 @@ internal object ExerciseSeedMain {
             category = MovementCategory.ISOMETRIC,
             kind = ExerciseKind.HOLD,
             highlights = listOf(
-                muscle(HIP_FLEXORS),
-                muscle(ABS),
-                muscle(TRICEPS, "Lockout"),
-                muscle(LOWER_TRAPS, "Scapular depression"),
-                tendon(MEDIAL_ELBOW, "Locked-elbow loading"),
-                joint(SHOULDER_JOINT),
+                muscle(HIP_FLEXORS, PRIMARY, END, "Hold the legs up against gravity"),
+                muscle(ABS, PRIMARY, END, "Compress the trunk"),
+                muscle(TRICEPS, SECONDARY, STEADY, "Lockout"),
+                muscle(LOWER_TRAPS, PRIMARY, STEADY, "Scapular depression"),
+                tendon(MEDIAL_ELBOW, SECONDARY, STEADY, "Locked-elbow loading"),
+                joint(SHOULDER_JOINT, SECONDARY, STEADY),
             ),
             setupCues = listOf(
                 "Grip the bars at hip level with straight arms and fully locked elbows.",
@@ -62,12 +64,12 @@ internal object ExerciseSeedMain {
             category = MovementCategory.ISOMETRIC,
             kind = ExerciseKind.HOLD,
             highlights = listOf(
-                muscle(FRONT_DELT),
-                muscle(SERRATUS),
-                muscle(PECS),
-                tendon(DISTAL_BICEPS_TENDON, "Straight-arm lengthened load"),
-                joint(WRIST, "Extension under load"),
-                joint(SHOULDER_JOINT),
+                muscle(FRONT_DELT, PRIMARY, END),
+                muscle(SERRATUS, PRIMARY, END),
+                muscle(PECS, SECONDARY, END),
+                tendon(DISTAL_BICEPS_TENDON, PRIMARY, END, "Straight-arm lengthened load"),
+                joint(WRIST, PRIMARY, END, "Extension under load"),
+                joint(SHOULDER_JOINT, SECONDARY, END),
             ),
             setupCues = listOf(
                 "Start in a high plank with the hands turned out slightly and the elbows locked.",
@@ -107,12 +109,13 @@ internal object ExerciseSeedMain {
             category = MovementCategory.PULL,
             kind = ExerciseKind.REPS,
             highlights = listOf(
-                muscle(LATS),
-                muscle(BICEPS),
-                muscle(LOWER_TRAPS),
-                tendon(DISTAL_BICEPS_TENDON, "Peak load at the bottom"),
-                tendon(MEDIAL_ELBOW, "Flexor origin under grip load"),
-                joint(SHOULDER_JOINT),
+                muscle(LATS, PRIMARY, END),
+                muscle(BICEPS, PRIMARY, END),
+                muscle(LOWER_TRAPS, SECONDARY, STEADY),
+                muscle(FOREARM_FLEXORS, SECONDARY, STEADY, "Grip"),
+                tendon(DISTAL_BICEPS_TENDON, PRIMARY, START, "Peak load at the bottom"),
+                tendon(MEDIAL_ELBOW, SECONDARY, STEADY, "Flexor origin under grip load"),
+                joint(SHOULDER_JOINT, SECONDARY, START),
             ),
             setupCues = listOf(
                 "Use an Active Hook Grip with the bar at the base of the fingers and the thumb wrapped.",
@@ -162,11 +165,11 @@ internal object ExerciseSeedMain {
             category = MovementCategory.PUSH,
             kind = ExerciseKind.REPS,
             highlights = listOf(
-                muscle(PECS),
-                muscle(TRICEPS),
-                muscle(FRONT_DELT),
-                tendon(MEDIAL_ELBOW, "Elbow tendons under tension"),
-                joint(SHOULDER_JOINT, "Anterior capsule at the bottom"),
+                muscle(PECS, PRIMARY, END),
+                muscle(TRICEPS, PRIMARY, STEADY),
+                muscle(FRONT_DELT, SECONDARY, END),
+                tendon(MEDIAL_ELBOW, SECONDARY, END, "Elbow tendons under tension"),
+                joint(SHOULDER_JOINT, PRIMARY, END, "Anterior capsule at the bottom"),
             ),
             setupCues = listOf(
                 "Start in a straight-arm support with the elbows locked and the shoulders depressed.",
@@ -206,11 +209,11 @@ internal object ExerciseSeedMain {
             category = MovementCategory.PUSH,
             kind = ExerciseKind.REPS,
             highlights = listOf(
-                muscle(PECS),
-                muscle(TRICEPS),
-                muscle(FRONT_DELT),
-                joint(WRIST, "Bar sits at the base of the palm"),
-                joint(SHOULDER_JOINT),
+                muscle(PECS, PRIMARY, END),
+                muscle(TRICEPS, PRIMARY, STEADY),
+                muscle(FRONT_DELT, SECONDARY, END),
+                joint(WRIST, SECONDARY, STEADY, "Bar sits at the base of the palm"),
+                joint(SHOULDER_JOINT, SECONDARY, END),
             ),
             setupCues = listOf(
                 "Grip the bar at the base of the palm with the thumbs wrapped and jump to support with locked elbows.",
@@ -249,12 +252,12 @@ internal object ExerciseSeedMain {
             category = MovementCategory.PULL,
             kind = ExerciseKind.REPS,
             highlights = listOf(
-                muscle(MID_BACK),
-                muscle(LATS),
-                muscle(REAR_DELT),
-                muscle(BICEPS),
-                tendon(DISTAL_BICEPS_TENDON),
-                joint(SHOULDER_JOINT),
+                muscle(MID_BACK, PRIMARY, END),
+                muscle(LATS, PRIMARY, END),
+                muscle(REAR_DELT, SECONDARY, END),
+                muscle(BICEPS, SECONDARY, END),
+                tendon(DISTAL_BICEPS_TENDON, SECONDARY, START),
+                joint(SHOULDER_JOINT, MINOR, STEADY),
             ),
             setupCues = listOf(
                 "Set the bar at about hip height and place the heels on a bench or step.",
@@ -294,11 +297,11 @@ internal object ExerciseSeedMain {
             category = MovementCategory.PUSH,
             kind = ExerciseKind.REPS,
             highlights = listOf(
-                muscle(FRONT_DELT),
-                muscle(TRICEPS),
-                muscle(SERRATUS),
-                joint(SHOULDER_JOINT, "Impingement risk if elbows flare"),
-                joint(WRIST),
+                muscle(FRONT_DELT, PRIMARY, END),
+                muscle(TRICEPS, SECONDARY, STEADY),
+                muscle(SERRATUS, SECONDARY, START),
+                joint(SHOULDER_JOINT, PRIMARY, END, "Impingement risk if elbows flare"),
+                joint(WRIST, SECONDARY, STEADY),
             ),
             setupCues = listOf(
                 "Start in an inverted V with the hips high, the hands shoulder-width apart and the arms straight.",
@@ -338,12 +341,12 @@ internal object ExerciseSeedMain {
             category = MovementCategory.PUSH,
             kind = ExerciseKind.REPS,
             highlights = listOf(
-                muscle(FRONT_DELT),
-                muscle(PECS),
-                muscle(TRICEPS),
-                tendon(DISTAL_BICEPS_TENDON, "Lengthened under lean"),
-                joint(WRIST),
-                joint(SHOULDER_JOINT),
+                muscle(FRONT_DELT, PRIMARY, END),
+                muscle(PECS, PRIMARY, END),
+                muscle(TRICEPS, SECONDARY, STEADY),
+                tendon(DISTAL_BICEPS_TENDON, SECONDARY, START, "Lengthened under lean"),
+                joint(WRIST, PRIMARY, STEADY),
+                joint(SHOULDER_JOINT, SECONDARY, END),
             ),
             setupCues = listOf(
                 "Start in a plank with the hands turned out slightly and level with the lower ribs or waist.",
@@ -383,12 +386,12 @@ internal object ExerciseSeedMain {
             category = MovementCategory.LEGS,
             kind = ExerciseKind.REPS,
             highlights = listOf(
-                muscle(QUADS),
-                muscle(GLUTES),
-                tendon(PATELLAR_TENDON, "Loaded eccentrically"),
-                tendon(ACHILLES),
-                joint(KNEE_JOINT),
-                joint(ANKLE_JOINT),
+                muscle(QUADS, PRIMARY, END),
+                muscle(GLUTES, PRIMARY, END),
+                tendon(PATELLAR_TENDON, PRIMARY, END, "Loaded eccentrically, peak at the bottom"),
+                tendon(ACHILLES, SECONDARY, END),
+                joint(KNEE_JOINT, PRIMARY, END),
+                joint(ANKLE_JOINT, SECONDARY, END),
             ),
             setupCues = listOf(
                 "Bulgarian split squat: rear foot on a bench behind you, front foot far enough forward for a vertical shin.",
@@ -429,10 +432,10 @@ internal object ExerciseSeedMain {
             category = MovementCategory.LEGS,
             kind = ExerciseKind.REPS,
             highlights = listOf(
-                muscle(HAMSTRINGS),
-                muscle(GLUTES),
-                tendon(HAMSTRING_TENDON, "Eccentric tendon loading"),
-                joint(KNEE_JOINT),
+                muscle(HAMSTRINGS, PRIMARY, END),
+                muscle(GLUTES, SECONDARY, END),
+                tendon(HAMSTRING_TENDON, PRIMARY, END, "Eccentric tendon loading"),
+                joint(KNEE_JOINT, SECONDARY, END),
             ),
             setupCues = listOf(
                 "Kneel on a pad with the ankles anchored under a sturdy bar or held by a partner.",
@@ -472,11 +475,12 @@ internal object ExerciseSeedMain {
             category = MovementCategory.CORE,
             kind = ExerciseKind.REPS,
             highlights = listOf(
-                muscle(ABS),
-                muscle(HIP_FLEXORS),
-                muscle(LATS, "Stabilizes the hang"),
-                tendon(MEDIAL_ELBOW, "Grip load"),
-                joint(SHOULDER_JOINT),
+                muscle(ABS, PRIMARY, END),
+                muscle(HIP_FLEXORS, PRIMARY, END),
+                muscle(LATS, SECONDARY, STEADY, "Stabilizes the hang"),
+                muscle(FOREARM_FLEXORS, SECONDARY, STEADY, "Grip"),
+                tendon(MEDIAL_ELBOW, SECONDARY, STEADY, "Grip load"),
+                joint(SHOULDER_JOINT, SECONDARY, STEADY),
             ),
             setupCues = listOf(
                 "Hang with an active hook grip and the shoulders packed.",
@@ -515,10 +519,10 @@ internal object ExerciseSeedMain {
             category = MovementCategory.MOBILITY,
             kind = ExerciseKind.HOLD,
             highlights = listOf(
-                muscle(FRONT_DELT, "Anterior deltoid stretch"),
-                muscle(PEC_MINOR, "Lengthened"),
-                tendon(DISTAL_BICEPS_TENDON, "Lengthened under gentle load"),
-                joint(SHOULDER_JOINT, "End-range extension"),
+                muscle(FRONT_DELT, PRIMARY, END, "Anterior deltoid stretch"),
+                muscle(PEC_MINOR, SECONDARY, END, "Lengthened"),
+                tendon(DISTAL_BICEPS_TENDON, SECONDARY, END, "Lengthened under gentle load"),
+                joint(SHOULDER_JOINT, PRIMARY, END, "End-range extension"),
             ),
             setupCues = listOf(
                 "Use a low bar with the feet on the floor or a box to assist.",
@@ -557,11 +561,11 @@ internal object ExerciseSeedMain {
             category = MovementCategory.MOBILITY,
             kind = ExerciseKind.HOLD,
             highlights = listOf(
-                muscle(FOREARM_FLEXORS),
-                muscle(FOREARM_EXTENSORS),
-                tendon(MEDIAL_ELBOW, "Flexor tendon origin"),
-                tendon(LATERAL_ELBOW, "Extensor tendon origin"),
-                joint(WRIST),
+                muscle(FOREARM_EXTENSORS, PRIMARY, START, "Stretched while the fingers point down"),
+                muscle(FOREARM_FLEXORS, PRIMARY, END, "Stretched while the fingers point up"),
+                tendon(LATERAL_ELBOW, SECONDARY, START, "Extensor tendon origin"),
+                tendon(MEDIAL_ELBOW, SECONDARY, END, "Flexor tendon origin"),
+                joint(WRIST, SECONDARY, STEADY),
             ),
             setupCues = listOf(
                 "Extend one arm in front with the elbow locked, palm up for the flexors or palm down for the extensors.",
@@ -600,12 +604,12 @@ internal object ExerciseSeedMain {
             category = MovementCategory.MOBILITY,
             kind = ExerciseKind.HOLD,
             highlights = listOf(
-                muscle(GLUTES),
-                muscle(QUADS),
-                tendon(ACHILLES, "Ankle dorsiflexion stretch"),
-                tendon(PATELLAR_TENDON, "Low-force lengthened loading"),
-                joint(ANKLE_JOINT),
-                joint(HIP_JOINT),
+                muscle(GLUTES, SECONDARY, END),
+                muscle(QUADS, SECONDARY, END),
+                tendon(ACHILLES, SECONDARY, END, "Ankle dorsiflexion stretch"),
+                tendon(PATELLAR_TENDON, MINOR, END, "Low-force lengthened loading"),
+                joint(ANKLE_JOINT, PRIMARY, END),
+                joint(HIP_JOINT, PRIMARY, END),
             ),
             setupCues = listOf(
                 "Stand with the feet slightly wider than the shoulders and the toes out about 30 degrees.",
@@ -644,10 +648,10 @@ internal object ExerciseSeedMain {
             category = MovementCategory.MOBILITY,
             kind = ExerciseKind.HOLD,
             highlights = listOf(
-                muscle(HAMSTRINGS),
-                muscle(ERECTORS),
-                tendon(HAMSTRING_TENDON, "Lengthened under bodyweight"),
-                tendon(THORACOLUMBAR, "Fascial tension"),
+                muscle(HAMSTRINGS, PRIMARY, END),
+                muscle(ERECTORS, PRIMARY, END, "Lengthened, not loaded"),
+                tendon(HAMSTRING_TENDON, SECONDARY, END, "Lengthened under bodyweight"),
+                tendon(THORACOLUMBAR, SECONDARY, END, "Fascial tension"),
             ),
             setupCues = listOf(
                 "Stand on a bench with the toes at the edge and soft knees.",
