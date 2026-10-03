@@ -424,14 +424,14 @@ private fun BottomActions(snapshot: EngineSnapshot, runner: SessionRunner, progr
                 }
             }
             SessionMode.FINISHED -> {
-                PrimaryButton("Save & finish") {
+                PrimaryButton("Save & finish", onClick = {
                     runner.finish(JointRating(JointDraft.wrists, JointDraft.elbows, JointDraft.shoulders))
                     JointDraft.reset()
-                }
-                SecondaryButton("Finish without rating") {
+                })
+                SecondaryButton("Finish without rating", onClick = {
                     runner.finish(null)
                     JointDraft.reset()
-                }
+                })
             }
             SessionMode.NOT_STARTED -> Unit
         }
@@ -461,9 +461,9 @@ private fun LogControls(snapshot: EngineSnapshot, runner: SessionRunner) {
             }
         }
     }
-    PrimaryButton("Log set & start rest") {
+    PrimaryButton("Log set & start rest", onClick = {
         if (item.kind == StepKind.ISOMETRIC) runner.logSet(null, hold, null) else runner.logSet(reps, null, rir)
-    }
+    })
 }
 
 @Composable
