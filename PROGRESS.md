@@ -18,13 +18,36 @@ builds everything once pushes work.
 - [x] M2 `:core` logic: day rotation, deload, session planner/sequencer, superset mode, smart rest
 - [x] M3 `:core` timers: TimelineTimer, isometric get-ready, tempo, rest, flow; cue to beep/haptic mapping
 - [x] M4 `:core` analytics: recovery window, weekly volume guard (+15%), streak, heatmap, joint advice, progression gating
-- [ ] M5 `:core` 3D body rig (IK, projections, highlights) + PNG preview tool, poses for every exercise
-- [ ] M6 `:core` unit tests for M1-M5 (M1-M4 done: 62 tests passing via tools/run-core-tests.sh; rig tests pending)
+- [x] M5 `:core` 3D body rig (IK, projections, highlights) + PNG preview tool (`tools/render-rig.sh`), poses for every
+      exercise (all 27 animations and every DO/DON'T still, basic capsule-mannequin fidelity; fidelity upgrades are M5b-M5d)
+- [ ] M5b **User requirement (added 2026-10-03): exercise visualizations are short looping 3D-rendered clips of a
+      humanoid doing the exercise, not static pictures.** Plan: perspective camera with yaw/pitch (default 3/4 view,
+      slow auto-orbit, drag to rotate, tap to switch to the spec's side/front views) over the existing 3D-authored rig;
+      shaded capsule/sphere "impostor" bodies with depth-correct painter's sorting; the clip plays the full rep
+      (keyframes already loop) at the exercise's real tempo. Implemented in `:core` (projection + shading math,
+      testable) and drawn by the Compose Canvas in M11. The local GIF/MP4 override from the spec stays as an option.
+- [ ] M5c **User requirement (added 2026-10-03): tension-point colouring must match the real stress of that exact
+      exercise.** Keep the spec colours (muscle red, tendon blue, joint yellow) but add per-highlight load level
+      (primary / secondary / minor, drawn as opacity) and the rep phase where the load peaks (e.g. distal biceps tendon
+      peaks in the bottom hang of a pull-up, patellar tendon at the bottom of a pistol squat), so the colours pulse with
+      the clip. Audit every exercise's highlights against its real biomechanics and record the rationale per exercise in
+      `docs/STRESS_MAP.md`. Caveat to state in the app: this is a general biomechanics / rehab-literature mapping, not
+      measured data for this user, and not medical advice.
+- [ ] M5d **User requirement (added 2026-10-03): the 3D models must be more detailed for every exercise.** Example
+      from the user: the hand-on-bar grip close-up is not understandable (cannot tell which parts are fingers). The current
+      figure is a simple capsule mannequin and the grip art is a crude schematic. To do: (1) a detailed humanoid for the
+      clips: tapered torso with chest/pelvis/abdomen shapes, neck, jaw/face, shoulders with deltoid bulge, upper arm and
+      forearm taper, articulated hands with four separate fingers (3 segments each) plus a thumb, feet with heel/arch/toes,
+      knees and elbows as visible joints; (2) per-exercise detail views where the contact matters (grip close-ups for the
+      hook grip vs palm-crease grip, wrist angle for the wrist drills, hand turn-out for planche work, foot position for
+      squats), drawn as a proper 3D hand with labelled callouts (fingers, thumb, bar, palm crease); (3) labels and arrows on
+      the DO/DON'T art so each picture can be read without guessing; (4) review every exercise sheet by eye for clarity.
+- [x] M6 `:core` unit tests for M1-M5 (73 tests passing via tools/run-core-tests.sh; add tests for M5b-M5d as they land)
 - [ ] M7 `:app` data layer (Room entities, DAOs, repository, seeding of user state)
 - [ ] M8 `:app` feedback (audio ducking beeps, haptics) + foreground service + wake lock + session controller
 - [ ] M9 `:app` theme + navigation + Tab 1 Dashboard
 - [ ] M10 `:app` Tab 2 Workout Player (flow, isometric, tempo, rest, set logging, cold mode, finish + joint log)
-- [ ] M11 `:app` Tab 3 Guide (rig canvas, media override, DO/DON'T, progression matrix)
+- [ ] M11 `:app` Tab 3 Guide (3D clip canvas from M5b with M5c stress colouring, media override, DO/DON'T, progression matrix)
 - [ ] M12 `:app` Tab 4 Stats (heatmap, safety guard, charts, joint history)
 - [ ] M13 Spec audit against `docs/SPEC.md`, fix gaps, README with build/install steps
 - [ ] M14 CI green (needs GitHub push access) and debug APK artifact produced
