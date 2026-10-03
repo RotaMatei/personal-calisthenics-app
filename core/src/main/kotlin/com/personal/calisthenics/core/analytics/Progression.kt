@@ -99,3 +99,32 @@ object ChartSeries {
             .map { (sessionId, group) -> ChartPoint(sessionId, group.minOf { it.epochMs }, group.sumOf { it.reps!! }.toDouble()) }
             .sortedBy { it.epochMs }
 }
+
+/** Y axis for a line chart: starts at zero and rounds the top up to a tidy step so the grid labels are round numbers. */
+class LineScale private constructor(val max: Double, val ticks: List<Double>) {
+    fun fraction(value: Double): Float = if (max <= 0.0) 0f else (value / max).toFloat().coerceIn(0f, 1f)
+
+    companion object {
+        fun of(values: List<Double>): LineScale {
+            val peak = values.maxOrNull() ?: 0.0
+            if (peak <= 0.0) return LineScale(1.0, listOf(0.0, 1.0))
+            val step = niceStep(peak / 4.0)
+            val top = Math.ceil(peak / step) * step
+            val ticks = generateSequence(0.0) { it + step }.takeWhile { it <= top + 1e-9 }.toList()
+            return LineScale(top, ticks)
+        }
+
+        private fun niceStep(raw: Double): Double {
+            val exp = Math.floor(Math.log10(raw))
+            val base = Math.pow(10.0, exp)
+            val f = raw / base
+            val nice = when {
+                f <= 1.0 -> 1.0
+                f <= 2.0 -> 2.0
+                f <= 5.0 -> 5.0
+                else -> 10.0
+            }
+            return nice * base
+        }
+    }
+}

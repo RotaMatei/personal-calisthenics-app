@@ -52,7 +52,7 @@ builds everything once pushes work.
 - [x] M9 `:app` theme + navigation + Tab 1 Dashboard (written 2026-10-03; verify the CI compile before relying on it)
 - [x] M10 `:app` Tab 2 Workout Player (flow, isometric, tempo, rest, set logging, cold mode, finish + joint log) (written 2026-10-03; CI compile pending)
 - [x] M11 `:app` Tab 3 Guide (3D clip canvas from M5b with M5c stress colouring, media override, DO/DON'T, progression matrix) (written 2026-10-03; CI compile pending)
-- [ ] M12 `:app` Tab 4 Stats (heatmap, safety guard, charts, joint history)
+- [x] M12 `:app` Tab 4 Stats (heatmap, safety guard, charts, joint history) (written 2026-10-03; CI compile pending)
 - [ ] M13 Spec audit against `docs/SPEC.md`, fix gaps, README with build/install steps
 - [ ] M14 CI green (needs GitHub push access) and debug APK artifact produced
 

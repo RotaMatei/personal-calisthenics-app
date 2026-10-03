@@ -36,6 +36,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.personal.calisthenicsguide.CalisthenicsApp
 import com.personal.calisthenicsguide.ui.dashboard.DashboardScreen
 import com.personal.calisthenicsguide.ui.guide.GuideScreen
+import com.personal.calisthenicsguide.ui.stats.StatsScreen
 import com.personal.calisthenicsguide.ui.dashboard.DashboardViewModel
 import com.personal.calisthenicsguide.ui.theme.AppColors
 import com.personal.calisthenicsguide.ui.workout.WorkoutScreen
@@ -119,16 +120,9 @@ fun AppRoot() {
                         )
                     }
                     Tab.GUIDE -> GuideScreen(repository = app.repository)
-                    Tab.STATS -> Placeholder("Stats", "Heatmap, safety guard and charts arrive with milestone M12.")
+                    Tab.STATS -> StatsScreen(repository = app.repository)
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun Placeholder(title: String, text: String) {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("$title\n\n$text", modifier = Modifier.padding(24.dp))
     }
 }

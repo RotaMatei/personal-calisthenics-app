@@ -177,3 +177,20 @@ class ChecklistTest {
         assertEquals(3, com.personal.calisthenics.core.plan.PreWorkoutChecklist.byGroup(com.personal.calisthenics.core.plan.ChecklistGroup.GEAR).size)
     }
 }
+
+class LineScaleTest {
+    @Test
+    fun scaleStartsAtZeroWithRoundTicks() {
+        val s = com.personal.calisthenics.core.analytics.LineScale.of(listOf(12.0, 18.0, 20.0))
+        assertEquals(0.0, s.ticks.first(), 0.0001)
+        assertTrue(s.max >= 20.0)
+        assertEquals(1f, s.fraction(s.max), 0.0001f)
+        assertEquals(listOf(0.0, 5.0, 10.0, 15.0, 20.0), s.ticks)
+    }
+
+    @Test
+    fun emptyAndZeroDataStillGiveAnAxis() {
+        assertEquals(2, com.personal.calisthenics.core.analytics.LineScale.of(emptyList()).ticks.size)
+        assertEquals(2, com.personal.calisthenics.core.analytics.LineScale.of(listOf(0.0)).ticks.size)
+    }
+}
