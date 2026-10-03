@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Calisthenics Park Guide</string>
+    <string name="notification_channel_name">Active workout</string>
+    <string name="notification_channel_description">Keeps the workout timers running while the screen is off</string>
+</resources>

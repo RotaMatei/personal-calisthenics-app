@@ -23,7 +23,19 @@ jobs:
         run: ./gradlew :core:test --stacktrace
 
       - name: Build debug APK
-        run: ./gradlew :app:assembleDebug --stacktrace
+        run: |
+          set -o pipefail
+          ./gradlew :app:assembleDebug --stacktrace 2>&1 | tee build.log
+
+      # Compile errors are not visible through the API, so surface them as annotations.
+      - name: Report build errors
+        if: failure()
+        run: |
+          {
+            grep -E '^e: |error:|FAILED|What went wrong' -A3 build.log | head -80 || true
+          } > errors.txt
+          MSG=$(sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g' errors.txt | head -c 6000)
+          echo "::error title=Build errors::${MSG}"
 
       - name: Upload test reports
         if: always()
