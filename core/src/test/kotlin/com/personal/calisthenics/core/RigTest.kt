@@ -10,6 +10,7 @@ import com.personal.calisthenics.core.rig.RigRenderer
 import com.personal.calisthenics.core.rig.RigSolver
 import com.personal.calisthenics.core.rig.RigValidation
 import com.personal.calisthenics.core.rig.ViewKind
+import com.personal.calisthenics.core.rig.toDraws
 import com.personal.calisthenics.core.seed.SeedData
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -116,9 +117,9 @@ class RigTest {
         for (e in SeedData.exercises) {
             val anim = RigLibrary.animation(e.id)
             for (view in ViewKind.values()) {
-                val sk = RigSolver.solve(anim.startPose())
-                val plain = RigRenderer.render(anim.scene, sk, view)
-                val withHighlights = RigRenderer.render(anim.scene, sk, view, e.highlights)
+                val pose = anim.startPose()
+                val plain = RigRenderer.render(anim.scene, pose, view)
+                val withHighlights = RigRenderer.render(anim.scene, pose, view, e.highlights.toDraws())
                 assertTrue("${e.id} ${view.name} highlights drawn", withHighlights.size > plain.size)
                 val bounds = RigFraming.bounds(anim, view)
                 assertTrue("${e.id} ${view.name} bounds", bounds.width > 30f && bounds.height > 60f)

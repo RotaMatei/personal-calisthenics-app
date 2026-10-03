@@ -57,6 +57,10 @@ data class Skeleton(
     val front: Vec3,
     /** Direction the face points (side view nose marker). */
     val faceDir: Vec3,
+    /** Lower-spine (pelvis) up and front directions, and the head's up direction (rotated by `look`). */
+    val lowUp: Vec3,
+    val lowFront: Vec3,
+    val headUp: Vec3,
     /** Distance between the requested limb target and where the limb actually ended. */
     val reachError: Map<LimbId, Float>,
 )
@@ -112,6 +116,9 @@ object RigSolver {
             up = upperUp,
             front = frontDir(upperAngle),
             faceDir = frontDir(upperAngle + pose.headTilt - pose.look),
+            lowUp = lowUp,
+            lowFront = frontDir(pose.lean),
+            headUp = upDir(upperAngle + pose.headTilt - pose.look),
             reachError = mapOf(
                 LimbId.HAND_L to armL.error,
                 LimbId.HAND_R to armR.error,

@@ -52,6 +52,20 @@ builds everything once pushes work.
 - [ ] M13 Spec audit against `docs/SPEC.md`, fix gaps, README with build/install steps
 - [ ] M14 CI green (needs GitHub push access) and debug APK artifact produced
 
+## Auto-resume
+- Scheduled task "Calisthenics app auto-resume" (trig_01NAmLe2tPTDAtFJZ7zbnBqD) starts a fresh session hourly at :48 and
+  follows this file. GitHub pushes work (App access confirmed 2026-10-03); CI "Core unit tests" passes under real Gradle,
+  "Build debug APK" fails until the :app sources exist. CI logs cannot be downloaded (egress); use
+  `gh run view <id> --json jobs` and `gh api repos/RotaMatei/personal-calisthenics-app/check-runs/<job id>/annotations`.
+
+## Design for M5b/M5d (detailed 3D figure) - in progress
+- Pose gets real hand/foot frames (finger direction, palm normal, toe-out yaw) and hand shapes (relaxed, flat, fist,
+  fingertips, bar hook). Figure = ellipsoid torso/head/shoe blobs + tapered limb tubes + articulated hands (4 fingers x 3
+  segments + thumb). Camera = yaw/pitch orbit with optional perspective; SIDE and FRONT stay as presets.
+- Highlights become depth-sorted blobs on the body (hidden when behind it) plus a faint x-ray pass, intensity = load x phase.
+- Bars: wrist target is derived from the bar centre and the hook-grip geometry (bar ~10 cm past the wrist), so all hanging
+  and support poses are re-authored from the bar position.
+
 ## Notes / decisions
 - Exercise catalog is code (`SeedData.kt`), user data is Room. Packages: `com.personal.calisthenics.core` (pure) and
   `com.personal.calisthenicsguide` (Android).

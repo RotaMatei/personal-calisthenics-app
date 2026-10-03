@@ -50,7 +50,7 @@ class RigAnimation(val scene: RigScene, val keyframes: List<Keyframe>) {
     private fun ease(t: Float): Float = ((1.0 - cos(PI * t.coerceIn(0f, 1f))) / 2.0).toFloat()
 }
 
-/** World-space rectangle used to frame an animation. */
+/** Rectangle in view centimetres used to frame an animation. */
 data class Bounds(val minX: Float, val minY: Float, val maxX: Float, val maxY: Float) {
     val width: Float get() = maxX - minX
     val height: Float get() = maxY - minY
@@ -58,32 +58,36 @@ data class Bounds(val minX: Float, val minY: Float, val maxX: Float, val maxY: F
 
 object RigFraming {
     /**
-     * Union bounds of everything the animation draws in [view], expanded by a margin, so the figure never
-     * leaves the frame while it moves. The floor is always included.
+     * Union bounds of everything the animation draws from [camera] (ground excluded), expanded by a margin, so the
+     * figure never leaves the frame while it moves.
      */
-    fun bounds(animation: RigAnimation, view: ViewKind, margin: Float = 14f): Bounds {
+    fun bounds(animation: RigAnimation, camera: Camera, margin: Float = 10f): Bounds {
         var minX = Float.MAX_VALUE
         var minY = Float.MAX_VALUE
         var maxX = -Float.MAX_VALUE
         var maxY = -Float.MAX_VALUE
-        fun include(p: Vec2, r: Float) {
-            minX = minOf(minX, p.x - r)
-            minY = minOf(minY, p.y - r)
-            maxX = maxOf(maxX, p.x + r)
-            maxY = maxOf(maxY, p.y + r)
+        fun include(x: Float, y: Float, r: Float) {
+            minX = minOf(minX, x - r)
+            minY = minOf(minY, y - r)
+            maxX = maxOf(maxX, x + r)
+            maxY = maxOf(maxY, y + r)
         }
+        val options = RenderOptions(xray = false)
         for (frame in 0..12) {
             val pose = animation.poseAt(animation.loopMs * frame / 12)
-            val sk = RigSolver.solve(pose)
-            for (prim in RigRenderer.render(animation.scene, sk, view)) {
+            for (prim in RigRenderer.render(animation.scene, pose, camera, emptyList(), options)) {
+                if (prim.material in RigRenderer.groundMaterials) continue
                 when (prim) {
-                    is CapsulePrim -> { include(prim.a, prim.ra); include(prim.b, prim.rb) }
-                    is DiscPrim -> include(prim.c, prim.r)
-                    is RectPrim -> { include(prim.min, 0f); include(prim.max, 0f) }
-                    is FloorPrim -> if (animation.scene.floor) include(Vec2(0f, prim.y), 0f)
+                    is CapsulePrim -> { include(prim.a.x, prim.a.y, prim.ra); include(prim.b.x, prim.b.y, prim.rb) }
+                    is DiscPrim -> include(prim.c.x, prim.c.y, prim.r)
+                    is EllipsePrim -> { val r = maxOf(prim.rx, prim.ry); include(prim.c.x, prim.c.y, r) }
+                    is PolyPrim -> prim.points.forEach { include(it.x, it.y, 0f) }
+                    is LinePrim -> { include(prim.a.x, prim.a.y, 0f); include(prim.b.x, prim.b.y, 0f) }
                 }
             }
         }
         return Bounds(minX - margin, minY - margin, maxX + margin, maxY + margin)
     }
+
+    fun bounds(animation: RigAnimation, view: ViewKind, margin: Float = 10f): Bounds = bounds(animation, view.camera, margin)
 }

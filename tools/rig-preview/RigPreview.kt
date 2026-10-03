@@ -1,28 +1,35 @@
 package com.personal.calisthenics.tools
 
-import com.personal.calisthenics.core.model.Highlight
+import com.personal.calisthenics.core.rig.Bounds
+import com.personal.calisthenics.core.rig.CalloutSide
+import com.personal.calisthenics.core.rig.Camera
 import com.personal.calisthenics.core.rig.CapsulePrim
+import com.personal.calisthenics.core.rig.DetailArt
 import com.personal.calisthenics.core.rig.DiscPrim
-import com.personal.calisthenics.core.rig.FloorPrim
+import com.personal.calisthenics.core.rig.EllipsePrim
+import com.personal.calisthenics.core.rig.HighlightDraw
+import com.personal.calisthenics.core.rig.Keyframe
+import com.personal.calisthenics.core.rig.LinePrim
+import com.personal.calisthenics.core.rig.Palette
 import com.personal.calisthenics.core.rig.Pose
+import com.personal.calisthenics.core.rig.PolyPrim
 import com.personal.calisthenics.core.rig.Prim
-import com.personal.calisthenics.core.rig.RectPrim
 import com.personal.calisthenics.core.rig.RigAnimation
 import com.personal.calisthenics.core.rig.RigFraming
 import com.personal.calisthenics.core.rig.RigLibrary
 import com.personal.calisthenics.core.rig.RigRenderer
 import com.personal.calisthenics.core.rig.RigScene
-import com.personal.calisthenics.core.rig.RigSolver
 import com.personal.calisthenics.core.rig.RigValidation
-import com.personal.calisthenics.core.rig.Role
-import com.personal.calisthenics.core.rig.ViewKind
-import com.personal.calisthenics.core.rig.Bounds
+import com.personal.calisthenics.core.rig.toDraws
 import com.personal.calisthenics.core.seed.SeedData
 import java.awt.BasicStroke
 import java.awt.Color
 import java.awt.Font
+import java.awt.Graphics2D
 import java.awt.RenderingHints
+import java.awt.geom.AffineTransform
 import java.awt.geom.Ellipse2D
+import java.awt.geom.Line2D
 import java.awt.geom.Path2D
 import java.awt.image.BufferedImage
 import java.io.File
@@ -30,54 +37,63 @@ import javax.imageio.ImageIO
 
 /**
  * Developer tool (JVM only): renders contact sheets of the rig so poses can be checked by eye.
- * Usage: RigPreview <outDir> <exerciseId|all> ...
- * Each sheet shows Position A and B (side + front) and every DO/DON'T pair.
+ * Usage: RigPreview <outDir> <exerciseId|all|details> ...
+ * Each sheet shows Position A and B in the 3/4 view plus side and front views, and every DO/DON'T pair.
  */
 object RigPreview {
-    private const val CELL_W = 300
-    private const val CELL_H = 340
+    private const val CELL_W = 360
+    private const val CELL_H = 400
 
-    private fun color(role: Role): Color = when (role) {
-        Role.FLOOR -> Color(0x4b, 0x55, 0x63)
-        Role.EQUIPMENT -> Color(0xf5, 0x9e, 0x0b)
-        Role.BODY_FAR -> Color(0x6b, 0x72, 0x80)
-        Role.BODY_MID -> Color(0x9c, 0xa3, 0xaf)
-        Role.BODY_NEAR -> Color(0xd1, 0xd5, 0xdb)
-        Role.HEAD -> Color(0xe5, 0xe7, 0xeb)
-        Role.BAND -> Color(0x22, 0xc5, 0x5e)
-        Role.MUSCLE -> Color(0xef, 0x44, 0x44, 150)
-        Role.TENDON -> Color(0x38, 0xbd, 0xf8, 190)
-        Role.JOINT -> Color(0xfa, 0xcc, 0x15, 190)
-    }
-
-    private class Frame(val bounds: Bounds, val w: Int, val h: Int) {
-        val scale = minOf((w - 16f) / bounds.width, (h - 40f) / bounds.height)
+    private class Frame(val bounds: Bounds, val w: Int, val h: Int, padX: Float = 8f, top: Float = 28f, bottom: Float = 8f) {
+        val scale = minOf((w - 2 * padX) / bounds.width, (h - top - bottom) / bounds.height)
         private val ox = (w - bounds.width * scale) / 2f
-        private val oy = 28f + (h - 40f - bounds.height * scale) / 2f
+        private val oy = top + (h - top - bottom - bounds.height * scale) / 2f
         fun x(v: Float) = ox + (v - bounds.minX) * scale
         fun y(v: Float) = oy + (bounds.maxY - v) * scale
         fun r(v: Float) = v * scale
     }
 
-    private fun draw(g: java.awt.Graphics2D, prims: List<Prim>, frame: Frame, ox: Int, oy: Int) {
+    private fun colorOf(p: Prim): Color {
+        val argb = Palette.argb(p.material, p.layer, p.tone, p.alpha)
+        return Color(argb, true)
+    }
+
+    private fun draw(g: Graphics2D, prims: List<Prim>, frame: Frame, ox: Int, oy: Int) {
+        val saved = g.transform
         for (p in prims) {
-            g.color = color(p.role)
+            g.color = colorOf(p)
             when (p) {
-                is FloorPrim -> {
-                    g.stroke = BasicStroke(2f)
-                    val yy = oy + frame.y(p.y).toDouble()
-                    g.draw(java.awt.geom.Line2D.Double(ox.toDouble(), yy, (ox + frame.w).toDouble(), yy))
-                }
                 is DiscPrim -> {
                     val r = frame.r(p.r).toDouble()
                     g.fill(Ellipse2D.Double(ox + frame.x(p.c.x) - r, oy + frame.y(p.c.y) - r, 2 * r, 2 * r))
                 }
-                is RectPrim -> {
-                    val x0 = ox + frame.x(p.min.x).toDouble()
-                    val x1 = ox + frame.x(p.max.x).toDouble()
-                    val y0 = oy + frame.y(p.max.y).toDouble()
-                    val y1 = oy + frame.y(p.min.y).toDouble()
-                    g.fill(java.awt.geom.Rectangle2D.Double(minOf(x0, x1), minOf(y0, y1), Math.abs(x1 - x0), Math.abs(y1 - y0)))
+                is EllipsePrim -> {
+                    val cx = ox + frame.x(p.c.x).toDouble()
+                    val cy = oy + frame.y(p.c.y).toDouble()
+                    g.transform = AffineTransform(saved).also { it.rotate(-Math.toRadians(p.angleDeg.toDouble()), cx, cy) }
+                    val rx = frame.r(p.rx).toDouble()
+                    val ry = frame.r(p.ry).toDouble()
+                    g.fill(Ellipse2D.Double(cx - rx, cy - ry, 2 * rx, 2 * ry))
+                    g.transform = saved
+                }
+                is PolyPrim -> {
+                    val path = Path2D.Double()
+                    p.points.forEachIndexed { i, v ->
+                        val x = ox + frame.x(v.x).toDouble()
+                        val y = oy + frame.y(v.y).toDouble()
+                        if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                    }
+                    path.closePath()
+                    g.fill(path)
+                }
+                is LinePrim -> {
+                    g.stroke = BasicStroke(maxOf(1f, frame.r(p.width)), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
+                    g.draw(
+                        Line2D.Double(
+                            ox + frame.x(p.a.x).toDouble(), oy + frame.y(p.a.y).toDouble(),
+                            ox + frame.x(p.b.x).toDouble(), oy + frame.y(p.b.y).toDouble(),
+                        ),
+                    )
                 }
                 is CapsulePrim -> {
                     val ax = ox + frame.x(p.a.x).toDouble()
@@ -105,33 +121,67 @@ object RigPreview {
                 }
             }
         }
+        g.transform = saved
     }
 
     private fun cell(
-        g: java.awt.Graphics2D, scene: RigScene, pose: Pose, view: ViewKind, bounds: Bounds,
-        highlights: List<Highlight>, col: Int, row: Int, label: String,
+        g: Graphics2D, scene: RigScene, pose: Pose, camera: Camera, bounds: Bounds,
+        highlights: List<HighlightDraw>, col: Int, row: Int, label: String,
     ) {
         val ox = col * CELL_W
         val oy = row * CELL_H
         val frame = Frame(bounds, CELL_W, CELL_H)
         g.color = Color(0x11, 0x13, 0x18)
         g.fillRect(ox, oy, CELL_W - 2, CELL_H - 2)
-        val sk = RigSolver.solve(pose)
-        draw(g, RigRenderer.render(scene, sk, view, highlights), frame, ox, oy)
+        g.clip = java.awt.Rectangle(ox, oy, CELL_W - 2, CELL_H - 2)
+        draw(g, RigRenderer.render(scene, pose, camera, highlights), frame, ox, oy)
+        g.clip = null
         g.color = Color.WHITE
         g.font = Font("SansSerif", Font.PLAIN, 12)
-        g.drawString("$label (${view.name.lowercase()})", ox + 8, oy + 16)
+        g.drawString(label, ox + 8, oy + 16)
     }
 
-    private fun boundsFor(scene: RigScene, poses: List<Pose>, view: ViewKind): Bounds {
-        val anim = RigAnimation(scene, poses.flatMap { listOf(com.personal.calisthenics.core.rig.Keyframe(it, 0, 1)) }.let { if (it.size >= 2) it else it + it })
-        return RigFraming.bounds(anim, view)
+    private fun boundsFor(scene: RigScene, poses: List<Pose>, camera: Camera): Bounds {
+        val frames = poses.map { Keyframe(it, 0, 1) }.let { if (it.size >= 2) it else it + it }
+        return RigFraming.bounds(RigAnimation(scene, frames), camera)
     }
+
+    private val views = listOf(
+        "3/4" to Camera.THREE_QUARTER,
+        "side" to Camera.SIDE,
+        "front" to Camera.FRONT,
+    )
 
     fun run(args: Array<String>) {
         val outDir = File(args[0]).also { it.mkdirs() }
         if (args.size >= 2 && args[1] == "details") {
             renderDetails(outDir)
+            return
+        }
+        if (args.size >= 2 && args[1] == "big") {
+            // big <id> <keyframe index|A|B> <yaw> <pitch> [yaw pitch ...]: large close-ups framed on the body only.
+            val id = args[2]
+            val anim = RigLibrary.animation(id)
+            val pose = when (args[3]) { "A" -> anim.startPose(); "B" -> anim.endPose(); else -> anim.keyframes[args[3].toInt()].pose }
+            val cams = args.drop(4).chunked(2).map { Camera(yaw = it[0].toFloat(), pitch = it[1].toFloat(), perspective = 0.3f) }
+            val size = 760
+            val img = BufferedImage(size * cams.size, size, BufferedImage.TYPE_INT_RGB)
+            val g = img.createGraphics()
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+            val hl = SeedData.exerciseOrNull(id)?.highlights.orEmpty().toDraws()
+            cams.forEachIndexed { i, cam ->
+                val bare = RigScene(floor = false, equipment = emptyList())
+                val bounds = boundsFor(bare, listOf(pose), cam)
+                val frame = Frame(bounds, size, size, padX = 10f, top = 10f, bottom = 10f)
+                g.color = Color(0x11, 0x13, 0x18)
+                g.fillRect(i * size, 0, size, size)
+                g.clip = java.awt.Rectangle(i * size, 0, size, size)
+                draw(g, RigRenderer.render(anim.scene, pose, cam, hl), frame, i * size, 0)
+                g.clip = null
+            }
+            g.dispose()
+            ImageIO.write(img, "png", File(outDir, "big_$id.png"))
+            println("wrote big_$id.png")
             return
         }
         val ids = if (args.size < 2 || args[1] == "all") SeedData.exercises.map { it.id } else args.drop(1)
@@ -151,13 +201,14 @@ object RigPreview {
             g.fillRect(0, 0, img.width, img.height)
             val a = anim.startPose()
             val b = anim.endPose()
-            val hl = exercise?.highlights.orEmpty()
-            val sideBounds = RigFraming.bounds(anim, ViewKind.SIDE)
-            val frontBounds = RigFraming.bounds(anim, ViewKind.FRONT)
-            cell(g, anim.scene, a, ViewKind.SIDE, sideBounds, hl, 0, 0, "$id A")
-            cell(g, anim.scene, b, ViewKind.SIDE, sideBounds, hl, 1, 0, "$id B")
-            cell(g, anim.scene, a, ViewKind.FRONT, frontBounds, hl, 2, 0, "$id A")
-            cell(g, anim.scene, b, ViewKind.FRONT, frontBounds, hl, 3, 0, "$id B")
+            val hl = exercise?.highlights.orEmpty().toDraws()
+            val tq = RigFraming.bounds(anim, Camera.THREE_QUARTER)
+            val side = RigFraming.bounds(anim, Camera.SIDE)
+            val front = RigFraming.bounds(anim, Camera.FRONT)
+            cell(g, anim.scene, a, Camera.THREE_QUARTER, tq, hl, 0, 0, "$id A (3/4)")
+            cell(g, anim.scene, b, Camera.THREE_QUARTER, tq, hl, 1, 0, "$id B (3/4)")
+            cell(g, anim.scene, b, Camera.SIDE, side, emptyList(), 2, 0, "$id B (side)")
+            cell(g, anim.scene, b, Camera.FRONT, front, emptyList(), 3, 0, "$id B (front)")
             printContacts(id, "A", a)
             printContacts(id, "B", b)
             for ((i, k) in anim.keyframes.withIndex()) printContacts(id, "kf$i", k.pose)
@@ -168,13 +219,13 @@ object RigPreview {
                     println("MISSING still for ${dd.wrongPoseKey} / ${dd.rightPoseKey}")
                     return@forEachIndexed
                 }
-                val sb = boundsFor(wrong.scene, listOf(wrong.pose, right.pose), ViewKind.SIDE)
-                val fb = boundsFor(wrong.scene, listOf(wrong.pose, right.pose), ViewKind.FRONT)
+                val tqb = boundsFor(wrong.scene, listOf(wrong.pose, right.pose), Camera.THREE_QUARTER)
+                val sb = boundsFor(wrong.scene, listOf(wrong.pose, right.pose), Camera.SIDE)
                 val row = index + 1
-                cell(g, wrong.scene, wrong.pose, ViewKind.SIDE, sb, emptyList(), 0, row, "WRONG ${dd.wrongLabel.take(22)}")
-                cell(g, right.scene, right.pose, ViewKind.SIDE, sb, emptyList(), 1, row, "RIGHT ${dd.rightLabel.take(22)}")
-                cell(g, wrong.scene, wrong.pose, ViewKind.FRONT, fb, emptyList(), 2, row, "WRONG")
-                cell(g, right.scene, right.pose, ViewKind.FRONT, fb, emptyList(), 3, row, "RIGHT")
+                cell(g, wrong.scene, wrong.pose, Camera.THREE_QUARTER, tqb, emptyList(), 0, row, "WRONG ${dd.wrongLabel.take(30)}")
+                cell(g, right.scene, right.pose, Camera.THREE_QUARTER, tqb, emptyList(), 1, row, "RIGHT ${dd.rightLabel.take(30)}")
+                cell(g, wrong.scene, wrong.pose, Camera.SIDE, sb, emptyList(), 2, row, "WRONG (side)")
+                cell(g, right.scene, right.pose, Camera.SIDE, sb, emptyList(), 3, row, "RIGHT (side)")
                 printContacts(id, "wrong:${dd.wrongPoseKey}", wrong.pose)
                 printContacts(id, "right:${dd.rightPoseKey}", right.pose)
             }
@@ -184,19 +235,57 @@ object RigPreview {
         }
     }
 
+    private const val PANEL_W = 640
+    private const val PANEL_H = 430
+    private const val GUTTER = 190
+
     private fun renderDetails(outDir: File) {
-        val keys = com.personal.calisthenics.core.rig.DetailArt.keys.sorted()
-        val img = BufferedImage(CELL_W * keys.size, CELL_H, BufferedImage.TYPE_INT_RGB)
+        val keys = DetailArt.keys.sorted()
+        val scenes = keys.map { DetailArt.scene(it)!! }
+        val panelsPerRow = scenes.maxOf { it.panels.size }
+        val img = BufferedImage(PANEL_W * panelsPerRow, PANEL_H * keys.size, BufferedImage.TYPE_INT_RGB)
         val g = img.createGraphics()
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-        keys.forEachIndexed { i, key ->
-            val scene = com.personal.calisthenics.core.rig.DetailArt.scene(key)!!
-            val frame = Frame(scene.bounds, CELL_W, CELL_H)
-            g.color = Color(0x11, 0x13, 0x18)
-            g.fillRect(i * CELL_W, 0, CELL_W - 2, CELL_H - 2)
-            draw(g, scene.prims.sortedBy { it.depth }, frame, i * CELL_W, 0)
-            g.color = Color.WHITE
-            g.drawString(key, i * CELL_W + 8, 16)
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
+        scenes.forEachIndexed { row, scene ->
+            scene.panels.forEachIndexed { col, panel ->
+                val ox = col * PANEL_W
+                val oy = row * PANEL_H
+                g.color = Color(0x11, 0x13, 0x18)
+                g.fillRect(ox, oy, PANEL_W - 2, PANEL_H - 2)
+                val inner = PANEL_W - 2 * GUTTER
+                val frame = Frame(panel.bounds, inner, PANEL_H, padX = 4f, top = 30f, bottom = 6f)
+                g.clip = java.awt.Rectangle(ox + GUTTER, oy + 24, inner - 2, PANEL_H - 28)
+                draw(g, panel.prims, frame, ox + GUTTER, oy)
+                g.clip = null
+                g.color = Color.WHITE
+                g.font = Font("SansSerif", Font.BOLD, 13)
+                g.drawString("${keys[row]}: ${panel.title}", ox + 8, oy + 18)
+                g.font = Font("SansSerif", Font.PLAIN, 13)
+                for (c in panel.callouts) {
+                    val tx = ox + GUTTER + frame.x(c.target.x)
+                    val ty = oy + frame.y(c.target.y)
+                    val lx = if (c.side == CalloutSide.LEFT) ox + GUTTER - 8f else ox + PANEL_W - GUTTER + 8f
+                    val ly = oy + 70f + c.order * 52f
+                    g.color = Color(0xfa, 0xfa, 0xfa)
+                    g.stroke = BasicStroke(1.2f)
+                    g.draw(Line2D.Double(lx.toDouble(), ly.toDouble(), tx.toDouble(), ty.toDouble()))
+                    g.fill(Ellipse2D.Double(tx - 3.0, ty - 3.0, 6.0, 6.0))
+                    // Wrap the label to the gutter width.
+                    val words = c.text.split(" ")
+                    val lines = mutableListOf<String>()
+                    var cur = ""
+                    for (w in words) {
+                        if (g.fontMetrics.stringWidth("$cur $w".trim()) > GUTTER - 14) { lines += cur; cur = w } else cur = "$cur $w".trim()
+                    }
+                    lines += cur
+                    lines.forEachIndexed { i, line ->
+                        val w = g.fontMetrics.stringWidth(line)
+                        val x = if (c.side == CalloutSide.LEFT) lx - w else lx
+                        g.drawString(line, x, ly - 4f + i * 15f)
+                    }
+                }
+            }
         }
         g.dispose()
         ImageIO.write(img, "png", File(outDir, "details.png"))

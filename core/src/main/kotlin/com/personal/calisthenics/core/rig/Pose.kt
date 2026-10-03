@@ -7,7 +7,20 @@ enum class Anchor { SHOULDER, HIP }
  * [contact] marks targets that must touch a bar, the floor or a bench, so the preview tool can verify reach.
  * [pitch] orients the hand / foot in the sagittal plane (0 = forward, 90 = pointing down).
  */
-data class Limb(val target: Vec3, val pole: Vec3, val pitch: Float = 0f, val contact: Boolean = false)
+data class Limb(
+    val target: Vec3,
+    val pole: Vec3,
+    val pitch: Float = 0f,
+    val contact: Boolean = false,
+    /** Turns the hand / foot about the vertical axis in degrees; positive turns outward (away from the midline). */
+    val yaw: Float = 0f,
+    /** Rotates the palm about the finger direction in degrees (0 = palm toward the down / forward side). */
+    val roll: Float = 0f,
+    /** How the hand is shaped. AUTO picks flat on the floor, a hook around a nearby bar, otherwise relaxed. */
+    val hand: HandShape = HandShape.AUTO,
+)
+
+enum class HandShape { AUTO, HOOK, FLAT, RELAXED, OPEN, FIST }
 
 /** Describes a pole as out (away from the body midline), up and forward components. */
 data class PoleSpec(val out: Float, val up: Float, val fwd: Float)
@@ -55,13 +68,26 @@ data class Pose(
         lerp(a.pole, b.pole, t),
         lerp(a.pitch, b.pitch, t),
         a.contact && b.contact,
+        lerp(a.yaw, b.yaw, t),
+        lerp(a.roll, b.roll, t),
+        if (t < 0.5f) a.hand else b.hand,
     )
 }
 
 /** Mirror-symmetric helper: returns (left, right) limbs at x = -x / +x with the pole mirrored. */
-fun sym(x: Float, y: Float, z: Float, pole: PoleSpec, pitch: Float = 0f, contact: Boolean = false): Pair<Limb, Limb> =
-    Limb(Vec3(-x, y, z), Vec3(-pole.out, pole.up, pole.fwd), pitch, contact) to
-        Limb(Vec3(x, y, z), Vec3(pole.out, pole.up, pole.fwd), pitch, contact)
+fun sym(
+    x: Float,
+    y: Float,
+    z: Float,
+    pole: PoleSpec,
+    pitch: Float = 0f,
+    contact: Boolean = false,
+    yaw: Float = 0f,
+    roll: Float = 0f,
+    hand: HandShape = HandShape.AUTO,
+): Pair<Limb, Limb> =
+    Limb(Vec3(-x, y, z), Vec3(-pole.out, pole.up, pole.fwd), pitch, contact, yaw, roll, hand) to
+        Limb(Vec3(x, y, z), Vec3(pole.out, pole.up, pole.fwd), pitch, contact, yaw, roll, hand)
 
 fun limb(x: Float, y: Float, z: Float, pole: Vec3, pitch: Float = 0f, contact: Boolean = false) =
     Limb(Vec3(x, y, z), pole, pitch, contact)
