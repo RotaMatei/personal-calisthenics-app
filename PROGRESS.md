@@ -45,7 +45,10 @@ builds everything once pushes work.
       the DO/DON'T art so each picture can be read without guessing; (4) review every exercise sheet by eye for clarity.
 - [x] M6 `:core` unit tests for M1-M5 (73 tests passing via tools/run-core-tests.sh; add tests for M5b-M5d as they land)
 - [x] M7 `:app` data layer (Room entities, DAOs, repository, seeding of user state)
-- [ ] M8 `:app` feedback (audio ducking beeps, haptics) + foreground service + wake lock + session controller
+- [x] M8 `:app` feedback (audio ducking beeps, haptics) + foreground service + wake lock + session controller
+      (pure `SessionEngine` state machine in `:core` with 8 tests; `CueFeedback`, `SessionRunner`, `WorkoutService` in `:app`.
+      Notes for M9/M10: request POST_NOTIFICATIONS at runtime before `SessionRunner.start`; set FLAG_KEEP_SCREEN_ON on the
+      workout screen; observe `app.sessionRunner.state`.)
 - [ ] M9 `:app` theme + navigation + Tab 1 Dashboard
 - [ ] M10 `:app` Tab 2 Workout Player (flow, isometric, tempo, rest, set logging, cold mode, finish + joint log)
 - [ ] M11 `:app` Tab 3 Guide (3D clip canvas from M5b with M5c stress colouring, media override, DO/DON'T, progression matrix)
