@@ -37,6 +37,7 @@ import com.personal.calisthenicsguide.CalisthenicsApp
 import com.personal.calisthenicsguide.ui.dashboard.DashboardScreen
 import com.personal.calisthenicsguide.ui.dashboard.DashboardViewModel
 import com.personal.calisthenicsguide.ui.theme.AppColors
+import com.personal.calisthenicsguide.ui.workout.WorkoutScreen
 import com.personal.calisthenicsguide.ui.theme.CalisthenicsTheme
 
 enum class Tab(val title: String, val icon: ImageVector) {
@@ -105,7 +106,17 @@ fun AppRoot() {
                         onColdMode = dashboard::setColdMode,
                         onPickDay = dashboard::overrideDay,
                     )
-                    Tab.WORKOUT -> Placeholder("Workout player", "The active session screen arrives with milestone M10.")
+                    Tab.WORKOUT -> {
+                        val progression by app.repository.progression.collectAsState(initial = emptyMap())
+                        WorkoutScreen(
+                            runnerState = runnerState,
+                            runner = app.sessionRunner,
+                            progression = progression,
+                            coldModeSetting = dashboardState?.coldMode ?: false,
+                            onColdMode = dashboard::setColdMode,
+                            onStart = ::beginWorkout,
+                        )
+                    }
                     Tab.GUIDE -> Placeholder("Guide", "3D exercise clips and the progression matrix arrive with milestone M11.")
                     Tab.STATS -> Placeholder("Stats", "Heatmap, safety guard and charts arrive with milestone M12.")
                 }

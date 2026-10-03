@@ -118,6 +118,9 @@ class SessionRunner(
 
     fun skipFlowBack() = act { it.skipFlowBack(now()) }
 
+    /** Ends the workout early; the screen then shows the joint log before [finish]. */
+    fun endEarly() = act { it.finish() }
+
     fun togglePause() = act { if (it.paused) it.resume(now()) else it.pause(now()) }
 
     private fun act(block: (SessionEngine) -> Unit) {
