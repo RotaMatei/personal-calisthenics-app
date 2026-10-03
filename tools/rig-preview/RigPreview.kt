@@ -1,6 +1,9 @@
 package com.personal.calisthenics.tools
 
+import com.personal.calisthenics.core.rig.AnnotationDraw
 import com.personal.calisthenics.core.rig.Bounds
+import com.personal.calisthenics.core.rig.LabelAlign
+import com.personal.calisthenics.core.rig.Stills
 import com.personal.calisthenics.core.rig.CalloutSide
 import com.personal.calisthenics.core.rig.Camera
 import com.personal.calisthenics.core.rig.CapsulePrim
@@ -124,6 +127,48 @@ object RigPreview {
         g.transform = saved
     }
 
+    /** One labelled DO/DON'T picture: body plus arrow callouts. */
+    private fun stillCell(g: Graphics2D, key: String, camera: Camera, bounds: Bounds, col: Int, row: Int, label: String) {
+        val ox = col * CELL_W
+        val oy = row * CELL_H
+        val frame = Frame(bounds, CELL_W, CELL_H)
+        g.color = Color(0x11, 0x13, 0x18)
+        g.fillRect(ox, oy, CELL_W - 2, CELL_H - 2)
+        g.clip = java.awt.Rectangle(ox, oy, CELL_W - 2, CELL_H - 2)
+        val still = Stills.render(key, camera)
+        if (still != null) {
+            draw(g, still.prims, frame, ox, oy)
+            g.font = Font("SansSerif", Font.BOLD, maxOf(9, frame.r(4.4f).toInt()))
+            for (l in still.overlay) drawLabel(g, l, frame, ox, oy)
+        }
+        g.clip = null
+        g.color = Color.WHITE
+        g.font = Font("SansSerif", Font.PLAIN, 12)
+        g.drawString(label, ox + 8, oy + 16)
+    }
+
+    private fun drawLabel(g: Graphics2D, l: AnnotationDraw, frame: Frame, ox: Int, oy: Int) {
+        val colour = if (l.good) Color(0x4a, 0xde, 0x80) else Color(0xf8, 0x71, 0x71)
+        val ax = ox + frame.x(l.anchor.x)
+        val ay = oy + frame.y(l.anchor.y)
+        val fm = g.fontMetrics
+        val tw = fm.stringWidth(l.text)
+        val tx = when (l.align) { LabelAlign.START -> ox + frame.x(l.label.x); LabelAlign.END -> ox + frame.x(l.label.x) - tw; LabelAlign.CENTER -> ox + frame.x(l.label.x) - tw / 2f }
+        val ty = oy + frame.y(l.label.y)
+        // Arrow from the nearest label edge to the body point.
+        val ex = (tx + tw / 2f).coerceIn(tx, tx + tw)
+        val sx = if (ax < tx) tx - 3f else if (ax > tx + tw) tx + tw + 3f else ex
+        val sy = if (ax in tx..(tx + tw)) (if (ay < ty) ty + 3f else ty - fm.ascent - 3f) else ty - fm.ascent / 2f
+        g.color = colour
+        g.stroke = BasicStroke(1.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
+        g.draw(Line2D.Double(sx.toDouble(), sy.toDouble(), ax.toDouble(), ay.toDouble()))
+        g.fill(Ellipse2D.Double(ax - 4.0, ay - 4.0, 8.0, 8.0))
+        g.color = Color(0, 0, 0, 190)
+        g.fillRoundRect((tx - 3).toInt(), (ty - fm.ascent - 2).toInt(), tw + 6, fm.height + 2, 6, 6)
+        g.color = colour
+        g.drawString(l.text, tx, ty)
+    }
+
     private fun cell(
         g: Graphics2D, scene: RigScene, pose: Pose, camera: Camera, bounds: Bounds,
         highlights: List<HighlightDraw>, col: Int, row: Int, label: String,
@@ -222,13 +267,14 @@ object RigPreview {
                     println("MISSING still for ${dd.wrongPoseKey} / ${dd.rightPoseKey}")
                     return@forEachIndexed
                 }
-                val tqb = boundsFor(wrong.scene, listOf(wrong.pose, right.pose), Camera.THREE_QUARTER)
-                val sb = boundsFor(wrong.scene, listOf(wrong.pose, right.pose), Camera.SIDE)
+                val keys = listOf(dd.wrongPoseKey, dd.rightPoseKey)
+                val tqb = Stills.bounds(keys, Camera.THREE_QUARTER)
+                val sb = Stills.bounds(keys, Camera.SIDE)
                 val row = index + 1
-                cell(g, wrong.scene, wrong.pose, Camera.THREE_QUARTER, tqb, emptyList(), 0, row, "WRONG ${dd.wrongLabel.take(30)}")
-                cell(g, right.scene, right.pose, Camera.THREE_QUARTER, tqb, emptyList(), 1, row, "RIGHT ${dd.rightLabel.take(30)}")
-                cell(g, wrong.scene, wrong.pose, Camera.SIDE, sb, emptyList(), 2, row, "WRONG (side)")
-                cell(g, right.scene, right.pose, Camera.SIDE, sb, emptyList(), 3, row, "RIGHT (side)")
+                stillCell(g, dd.wrongPoseKey, Camera.THREE_QUARTER, tqb, 0, row, "WRONG ${dd.wrongLabel.take(30)}")
+                stillCell(g, dd.rightPoseKey, Camera.THREE_QUARTER, tqb, 1, row, "RIGHT ${dd.rightLabel.take(30)}")
+                stillCell(g, dd.wrongPoseKey, Camera.SIDE, sb, 2, row, "WRONG (side)")
+                stillCell(g, dd.rightPoseKey, Camera.SIDE, sb, 3, row, "RIGHT (side)")
                 printContacts(id, "wrong:${dd.wrongPoseKey}", wrong.pose)
                 printContacts(id, "right:${dd.rightPoseKey}", right.pose)
             }
