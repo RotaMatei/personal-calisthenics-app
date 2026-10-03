@@ -167,3 +167,13 @@ class SessionEngineTest {
         assertEquals(110, d.engine.snapshot(d.now).restSeconds)
     }
 }
+
+class ChecklistTest {
+    @Test
+    fun checklistHasNutritionAndGearItemsWithUniqueIds() {
+        val items = com.personal.calisthenics.core.plan.PreWorkoutChecklist.items
+        assertEquals(items.size, items.map { it.id }.toSet().size)
+        assertEquals(3, com.personal.calisthenics.core.plan.PreWorkoutChecklist.byGroup(com.personal.calisthenics.core.plan.ChecklistGroup.NUTRITION).size)
+        assertEquals(3, com.personal.calisthenics.core.plan.PreWorkoutChecklist.byGroup(com.personal.calisthenics.core.plan.ChecklistGroup.GEAR).size)
+    }
+}

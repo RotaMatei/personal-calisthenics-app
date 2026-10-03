@@ -49,7 +49,7 @@ builds everything once pushes work.
       (pure `SessionEngine` state machine in `:core` with 8 tests; `CueFeedback`, `SessionRunner`, `WorkoutService` in `:app`.
       Notes for M9/M10: request POST_NOTIFICATIONS at runtime before `SessionRunner.start`; set FLAG_KEEP_SCREEN_ON on the
       workout screen; observe `app.sessionRunner.state`.)
-- [ ] M9 `:app` theme + navigation + Tab 1 Dashboard
+- [x] M9 `:app` theme + navigation + Tab 1 Dashboard (written 2026-10-03; verify the CI compile before relying on it)
 - [ ] M10 `:app` Tab 2 Workout Player (flow, isometric, tempo, rest, set logging, cold mode, finish + joint log)
 - [ ] M11 `:app` Tab 3 Guide (3D clip canvas from M5b with M5c stress colouring, media override, DO/DON'T, progression matrix)
 - [ ] M12 `:app` Tab 4 Stats (heatmap, safety guard, charts, joint history)
