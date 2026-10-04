@@ -4,17 +4,17 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- A figure hanging from a pull-up bar: sage figure, off-white bar. -->
+    <!-- Themed (monochrome) launcher icon, Android 13+. -->
     <path
-        android:strokeColor="#E2E5E9" android:strokeWidth="6" android:strokeLineCap="round"
+        android:strokeColor="#FFFFFFFF" android:strokeWidth="6" android:strokeLineCap="round"
         android:pathData="M31,32L77,32" />
     <path
-        android:strokeColor="#9DBBA8" android:strokeWidth="6" android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:strokeColor="#FFFFFFFF" android:strokeWidth="6" android:strokeLineCap="round" android:strokeLineJoin="round"
         android:pathData="M38,32L45,52L63,52L70,32" />
     <path
-        android:fillColor="#9DBBA8"
+        android:fillColor="#FFFFFFFF"
         android:pathData="M54,41m-6.5,0a6.5,6.5 0,1 1,13 0a6.5,6.5 0,1 1,-13 0" />
     <path
-        android:strokeColor="#9DBBA8" android:strokeWidth="13" android:strokeLineCap="round"
+        android:strokeColor="#FFFFFFFF" android:strokeWidth="13" android:strokeLineCap="round"
         android:pathData="M54,57L54,76" />
 </vector>

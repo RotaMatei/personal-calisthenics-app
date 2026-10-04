@@ -86,7 +86,7 @@ milestones marked `(claimed)` unless `git log origin/main -1` is more than 2 hou
       3D video and a Next button sits at the bottom. USER DECISIONS (2026-10-04): this applies to strength sets (Phase 2)
       only; warm-up/decompression drills keep their timers and 10 s transitions. Tempo beeps and vibration KEEP running on
       this screen (the clip loops at the set's tempo), Next ends the set and leads to a one-tap pre-filled reps/RIR log, then rest.
-- [ ] M20 (claimed) **New logo.** A better, more suitable app icon (adaptive launcher icon plus the notification icon) that
+- [x] M20 **New logo** (DONE 2026-10-04: a figure hanging from a pull-up bar, sage on slate with an off-white bar, drawn as vector strokes only; adaptive launcher icon, themed monochrome layer for Android 13+, and a separate white silhouette `ic_stat_workout` for the notification (the old one reused the coloured launcher art, which Android flattens to a blob); previewed at 48, 96 and 192 px in circle and rounded-square masks). A better, more suitable app icon (adaptive launcher icon plus the notification icon) that
       fits calisthenics and tendon health. Keep it simple and readable at small sizes.
 - Root causes found 2026-10-04 (for M15, all fixed; the 'snap' numbers below were partly fast real motion, the test now checks the bend direction instead): (1) pull-up elbow flips: the fixed elbow "pole" (BACK_DOWN) throws the elbow up
   and behind the head during the ascent (elbow above the wrist at t~1.3-1.6 s) and then snaps below it; need a per-pose,

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+    <!-- Notification icon: the same figure as one white silhouette (Android only uses its alpha). -->
+    <group android:translateX="-22" android:translateY="-24">
+        <path
+            android:strokeColor="#FFFFFFFF" android:strokeWidth="6" android:strokeLineCap="round"
+            android:pathData="M31,32L77,32" />
+        <path
+            android:strokeColor="#FFFFFFFF" android:strokeWidth="6" android:strokeLineCap="round" android:strokeLineJoin="round"
+            android:pathData="M38,32L45,52L63,52L70,32" />
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M54,41m-6.5,0a6.5,6.5 0,1 1,13 0a6.5,6.5 0,1 1,-13 0" />
+        <path
+            android:strokeColor="#FFFFFFFF" android:strokeWidth="13" android:strokeLineCap="round"
+            android:pathData="M54,57L54,76" />
+    </group>
+</vector>
