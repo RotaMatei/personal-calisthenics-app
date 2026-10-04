@@ -1,6 +1,5 @@
 package com.personal.calisthenicsguide.ui.guide
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -106,14 +105,20 @@ fun ClipView(exerciseId: String, highlights: List<Highlight>, modifier: Modifier
                     }
                 },
         ) {
-            Canvas(Modifier.fillMaxWidth().height(height)) {
-                val frame = when (view) {
-                    ClipView.ORBIT -> player.frame(timeMs, yawOffset)
-                    ClipView.SIDE -> player.frame(timeMs, camera = Camera.SIDE)
-                    ClipView.FRONT -> player.frame(timeMs, camera = Camera.FRONT)
-                }
-                val bounds = fixedBounds ?: player.boundsAnyYaw
-                drawPrims(frame.prims, ViewFit(bounds, size.width, size.height, pad = 8f))
+            LivePicture(
+                player = player,
+                bounds = fixedBounds ?: player.boundsAnyYaw,
+                pad = 8f,
+                modifier = Modifier.fillMaxWidth().height(height),
+            ) {
+                LiveRequest(
+                    timeMs,
+                    when (view) {
+                        ClipView.ORBIT -> player.cameraAt(timeMs, yawOffset)
+                        ClipView.SIDE -> Camera.SIDE
+                        ClipView.FRONT -> Camera.FRONT
+                    },
+                )
             }
             // Multi-part clips (joint circles) name the part being played: Neck, Shoulders, Elbows, Hips, Ankles.
             val caption = animation.captionAt(timeMs)

@@ -67,6 +67,14 @@ data class Skeleton(
     val headSide: Vec3,
     /** Distance between the requested limb target and where the limb actually ended. */
     val reachError: Map<LimbId, Float>,
+    /**
+     * Unit direction each middle joint (elbow / knee) points to, perpendicular to the shoulder -> wrist (hip -> ankle)
+     * line. It fixes the bend plane, so a skinned mesh can twist limbs correctly even when they are straight.
+     */
+    val armBendL: Vec3 = Vec3(0f, 0f, -1f),
+    val armBendR: Vec3 = Vec3(0f, 0f, -1f),
+    val legBendL: Vec3 = Vec3(0f, 0f, 1f),
+    val legBendR: Vec3 = Vec3(0f, 0f, 1f),
 )
 
 object RigSolver {
@@ -144,6 +152,7 @@ object RigSolver {
                 LimbId.FOOT_L to legL.error,
                 LimbId.FOOT_R to legR.error,
             ),
+            armBendL = armL.bend, armBendR = armR.bend, legBendL = legL.bend, legBendR = legR.bend,
         )
     }
 
@@ -155,7 +164,7 @@ object RigSolver {
         return Vec3(v.x * c + v.y * s, -v.x * s + v.y * c, v.z)
     }
 
-    private data class Chain(val mid: Vec3, val end: Vec3, val error: Float)
+    private data class Chain(val mid: Vec3, val end: Vec3, val error: Float, val bend: Vec3)
 
     /** Analytic two-bone IK in 3D with a pole vector choosing the bend direction. */
     private fun twoBone(root: Vec3, target: Vec3, pole: Vec3, l1: Float, l2: Float): Chain {
@@ -175,8 +184,9 @@ object RigSolver {
             perp = Vec3(0f, 0f, 1f) - dir * dir.z
             if (perp.length() < 1e-4f) perp = Vec3(1f, 0f, 0f)
         }
-        val mid = root + dir * a + perp.normalized() * h
+        val bend = perp.normalized()
+        val mid = root + dir * a + bend * h
         val error = (end - target).length()
-        return Chain(mid, end, error)
+        return Chain(mid, end, error, bend)
     }
 }

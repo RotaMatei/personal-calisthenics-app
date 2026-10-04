@@ -3,6 +3,7 @@ package com.personal.calisthenicsguide.ui.guide
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,6 +26,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.personal.calisthenics.core.mesh.MeshFrames
 import com.personal.calisthenics.core.model.Highlight
 import com.personal.calisthenics.core.rig.CalloutSide
 import com.personal.calisthenics.core.rig.Camera
@@ -43,18 +45,28 @@ fun StillView(
     height: Dp = 260.dp,
 ) {
     val measurer = rememberTextMeasurer()
+    // Capsule picture and the labels laid over the figure; the labels are drawn on the mesh picture too.
     val frame = remember(key, camera, highlights) { Stills.render(key, camera, highlights) }
-    Canvas(
-        modifier
+    if (frame == null) {
+        Box(modifier.fillMaxWidth().height(height).clip(RoundedCornerShape(14.dp)).background(AppColors.ClipBackdrop))
+        return
+    }
+    StaticMeshPicture(
+        cacheKey = "still|$key|$camera|${highlights.hashCode()}",
+        bounds = bounds,
+        pad = 6f,
+        modifier = modifier
             .fillMaxWidth()
             .height(height)
             .clip(RoundedCornerShape(14.dp))
             .background(AppColors.ClipBackdrop),
-    ) {
-        if (frame == null) return@Canvas
-        val fit = ViewFit(bounds, size.width, size.height, pad = 6f)
-        drawPrims(frame.prims, fit)
-        for (label in frame.overlay) drawAnnotation(label, fit, measurer, minTextPx = 11.sp.toPx())
+        overlay = {
+            val fit = ViewFit(bounds, size.width, size.height, pad = 6f)
+            for (label in frame.overlay) drawAnnotation(label, fit, measurer, minTextPx = 11.sp.toPx())
+        },
+        fallback = { drawPrims(frame.prims, ViewFit(bounds, size.width, size.height, pad = 6f)) },
+    ) { renderer, view, out, options ->
+        MeshFrames.still(renderer, key, camera, highlights, view, out, options)
     }
 }
 

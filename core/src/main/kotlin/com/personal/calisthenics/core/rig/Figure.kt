@@ -2,6 +2,8 @@ package com.personal.calisthenics.core.rig
 
 import kotlin.math.abs
 
+internal class HandSetup(val frame: HandFrame, val shape: HandShape, val bar: BarWrap?)
+
 /** Builds the detailed humanoid (torso, head, limbs, hands, feet) as depth-sortable groups. */
 internal object FigureBuilder {
 
@@ -166,11 +168,17 @@ internal object FigureBuilder {
     // ------------------------------------------------------------------ hands
 
     private fun hand(id: String, limb: Limb, wrist: Vec3, right: Boolean, scene: RigScene, cam: Camera): List<Group3> {
+        val setup = handSetup(limb, wrist, right, scene)
+        return HandRig.build(id, setup.frame, setup.shape, setup.bar, right, toCamera = cam.toCamera)
+    }
+
+    /** Orientation, finger shape and gripped bar (if any) of a hand; shared by the capsule and the skinned-mesh figures. */
+    fun handSetup(limb: Limb, wrist: Vec3, right: Boolean, scene: RigScene): HandSetup {
         // A relaxed arm hanging at the side turns its palm toward the thigh.
         val l = if (limb.hand == HandShape.AUTO && limb.roll == 0f && !limb.contact && limb.pitch in 45f..135f) limb.copy(roll = -90f) else limb
         val frame = HandRig.frame(l, wrist, right)
         val (shape, bar) = resolveGrip(l, frame, wrist, scene)
-        return HandRig.build(id, frame, shape, bar, right, toCamera = cam.toCamera)
+        return HandSetup(frame, shape, bar)
     }
 
     private fun resolveGrip(limb: Limb, frame: HandFrame, wrist: Vec3, scene: RigScene): Pair<HandShape, BarWrap?> {

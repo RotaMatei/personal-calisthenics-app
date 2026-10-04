@@ -11,3 +11,4 @@
 *.apk
 *.aab
 /tools/out/
+__pycache__/

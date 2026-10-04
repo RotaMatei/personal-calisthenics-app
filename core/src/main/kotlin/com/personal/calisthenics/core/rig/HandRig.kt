@@ -61,6 +61,38 @@ internal object HandRig {
         return v * cos(a) + k.cross(v) * sin(a) + k * (k.dot(v) * (1f - cos(a)))
     }
 
+    // ------------------------------------------------------------------ finger flexion for skinned hands
+
+    /**
+     * Flexion of finger [i] (0 = index .. 3 = little) as three relative joint angles in degrees (knuckle, middle,
+     * tip), positive toward the palm. A hooked hand wraps the fingers around [bar]; other shapes use the fixed curls.
+     */
+    fun fingerFlex(f: HandFrame, shape: HandShape, bar: BarWrap?, i: Int): List<Float> {
+        val resolved = if (shape == HandShape.AUTO) HandShape.RELAXED else shape
+        val fg = fingers[i]
+        if (resolved == HandShape.HOOK && bar != null) {
+            val rel = bar.center - f.origin
+            val wrap = Vec2(rel.dot(f.d), rel.dot(f.n))
+            val chain = wrapChain(Vec2(KNUCKLE, 0f), wrap, bar.radius + 0.95f * fg.thick, fg.lens, ccw = true)
+            var prev = 0f
+            return (0 until 3).map { j ->
+                val ang = Math.toDegrees(atan2(chain[j + 1].y - chain[j].y, chain[j + 1].x - chain[j].x).toDouble()).toFloat()
+                (ang - prev).also { prev = ang }
+            }
+        }
+        return curls(resolved).map { it * fg.curl }
+    }
+
+    /** Thumb flexion (base, middle, tip) in degrees toward the palm for [shape]. */
+    fun thumbFlex(shape: HandShape, gripping: Boolean): List<Float> = when {
+        shape == HandShape.HOOK && gripping -> listOf(12f, 42f, 36f)
+        shape == HandShape.HOOK -> listOf(8f, 30f, 25f)
+        shape == HandShape.FIST -> listOf(10f, 55f, 45f)
+        shape == HandShape.FLAT -> listOf(0f, 0f, 0f)
+        shape == HandShape.OPEN -> listOf(0f, 8f, 5f)
+        else -> listOf(0f, 20f, 15f)
+    }
+
     // ------------------------------------------------------------------ geometry
 
     /** Finger joint flexion (MCP, PIP, DIP) in degrees toward the palm for each shape. */

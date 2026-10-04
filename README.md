@@ -11,8 +11,8 @@ Stress-colouring rationale per exercise: [`docs/STRESS_MAP.md`](docs/STRESS_MAP.
 - **Workout**: warm-up flow (10 s transitions), isometric holds with a 5 s get-ready buffer, tempo metronome, smart rest
   timer that starts when a set is logged, reps/RIR logging, joint rating at the end. Runs in a foreground service with a
   wake lock; the screen stays on during a session.
-- **Guide**: every exercise with a looping 3D humanoid clip (orbit, side, front), stress-matched muscle/tendon/joint
-  colouring, optional own GIF/MP4, labelled DO/DON'T pictures, and the 4-stage progression matrix.
+- **Guide**: every exercise with a looping clip of a real 3D human mesh (orbit, side, front) tinted with soft
+  stress-matched muscle/tendon/joint hues, optional own GIF/MP4, labelled DO/DON'T pictures, and the 4-stage progression matrix.
 - **Stats**: consistency heatmap and streak, tendon safety guard (pull volume +15% warning), strength charts, joint log.
 
 ## Build and install
@@ -32,10 +32,17 @@ notification that keeps timers alive with the screen off.
 ## Layout
 
 - `core/`: pure Kotlin (no Android): models and seed data, session planning, deload, timers and cue catalog, the
-  `SessionEngine` state machine, analytics, and the 3D body rig that produces drawing primitives.
+  `SessionEngine` state machine, analytics, the 3D body rig (poses, solver, capsule figure) and the human mesh pipeline
+  (`core/.../mesh/`: skinning, rasteriser, floor and props) that draws the figure into a bitmap.
 - `app/`: Compose UI, Room data layer, audio/haptic feedback, foreground service.
 - `tools/run-core-tests.sh`: compiles and runs the `:core` tests without Gradle (needs only a JDK and downloads kotlinc).
-  `tools/render-rig.sh` renders PNG contact sheets of the rig for visual review.
+  `tools/render-rig.sh` renders PNG contact sheets of the rig and `tools/render-mesh.sh` renders the human mesh for visual
+  review. `tools/mesh/` converts the MakeHuman body into `core/src/main/resources/mesh/human.bin`.
+
+## Credits
+
+The human body mesh comes from the MakeHuman project and is CC0 (public domain); details, files used and how to regenerate
+it are in [`docs/ASSETS.md`](docs/ASSETS.md).
 
 ## Notes
 

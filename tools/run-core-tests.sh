@@ -41,5 +41,5 @@ echo ">> Compiling :core tests"
 [ -d "$OUT/test/com" ] || { echo "test compilation failed"; exit 2; }
 
 echo ">> Running tests"
-java -cp "$OUT/main:$OUT/test:$OUT/shim:$STDLIB" ShimRunner "$OUT/test" "${1:-}" 2>&1 | grep -v "JAVA_TOOL_OPTIONS"
+java -cp "$OUT/main:$OUT/test:$OUT/shim:$ROOT/core/src/main/resources:$STDLIB" ShimRunner "$OUT/test" "${1:-}" 2>&1 | grep -v "JAVA_TOOL_OPTIONS"
 exit "${PIPESTATUS[0]}"

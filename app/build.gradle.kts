@@ -40,6 +40,11 @@ android {
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
     }
+    sourceSets {
+        // The human body mesh lives with :core (its tests and the preview tools read it from there); the app opens it
+        // from its assets as human.bin. (:core also ships it as a Java resource, which MeshAssets uses as a fallback.)
+        getByName("main").assets.srcDir("../core/src/main/resources/mesh")
+    }
 }
 
 ksp {

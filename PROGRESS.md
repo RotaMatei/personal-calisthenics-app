@@ -108,6 +108,8 @@ milestones marked `(claimed)` unless `git log origin/main -1` is more than 2 hou
       still the soft muted hue wash, now projected over the mesh regions; (5) tests: mesh loads, weights sum to 1, posed mesh
       stays attached to the skeleton, no stretched triangles in the 20 exercise poses; preview renders checked by eye;
       (6) credit the asset in the README. Keep `RigRenderer` (capsule figure) as a fallback until the mesh path is verified.
+      Status 2026-10-04: built (`tools/mesh/`, `core/.../mesh/`, `human.bin`, `HumanMeshTest`, app views in `MeshViews.kt` with the
+      capsule figure as automatic fallback, credit in `docs/ASSETS.md`); waiting for the CI compile of the Android layer.
 - [ ] M21 Re-audit against these requirements and `docs/SPEC.md`, update tests and README, CI green, new debug APK artifact.
 
 ## Auto-resume

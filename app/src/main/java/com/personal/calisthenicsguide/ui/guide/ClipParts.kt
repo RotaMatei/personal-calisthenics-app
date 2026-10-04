@@ -1,9 +1,10 @@
 package com.personal.calisthenicsguide.ui.guide
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -21,15 +22,16 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.personal.calisthenics.core.mesh.MeshFrames
 import com.personal.calisthenics.core.model.Highlight
 import com.personal.calisthenics.core.rig.Bounds
 import com.personal.calisthenics.core.rig.ClipPlayer
 import com.personal.calisthenics.core.rig.Prim
 import com.personal.calisthenics.core.rig.RigAnimation
+import com.personal.calisthenics.core.rig.RigFraming
 import com.personal.calisthenics.core.rig.RigLibrary
 import com.personal.calisthenicsguide.ui.theme.AppColors
 import com.personal.calisthenicsguide.ui.theme.Space
@@ -91,30 +93,36 @@ fun DrivenClip(
 ) {
     val player = remember(animation, highlights) { ClipPlayer(animation, highlights) }
     var yaw by remember(animation) { mutableFloatStateOf(0f) }
-    Canvas(
+    Box(
         modifier
             .background(AppColors.ClipBackdrop)
             .pointerInput(animation) { detectHorizontalDragGestures { _, drag -> yaw += drag * 0.4f } },
     ) {
-        val top = topReserve.toPx()
-        val usable = (size.height - top - bottomReserve.toPx()).coerceAtLeast(1f)
-        val frame = player.frame(clock.value, yaw)
-        translate(top = top) {
-            drawPrims(frame.prims, ViewFit(player.boundsAnyYaw, size.width, usable, pad = 10f))
+        LivePicture(
+            player = player,
+            bounds = player.boundsAnyYaw,
+            pad = 10f,
+            modifier = Modifier.fillMaxSize().padding(top = topReserve, bottom = bottomReserve),
+        ) {
+            val t = clock.value
+            LiveRequest(t, player.cameraAt(t, yaw))
         }
     }
 }
 
-private class StillData(val prims: List<Prim>, val bounds: Bounds)
+private class StillData(val animation: RigAnimation) {
+    val player = ClipPlayer(animation, emptyList())
+    /** Framing of position A alone from the clip's first camera, so a thumbnail needs no sweep of the whole loop. */
+    val bounds: Bounds = RigFraming.boundsAt(animation, listOf(0L), player.cameraAt(0L))
+    /** Capsule picture, only needed when the mesh is unavailable. */
+    val prims: List<Prim> by lazy { player.frame(0L).prims }
+}
 
 /** Position A of an exercise as a small, still picture: the thumbnail of a row on the workout details page. */
 @Composable
 fun ClipStill(exerciseId: String, modifier: Modifier = Modifier) {
     val still = remember(exerciseId) {
-        RigLibrary.animationOrNull(exerciseId)?.let { animation ->
-            val player = ClipPlayer(animation, emptyList())
-            StillData(player.frame(0L).prims, player.bounds)
-        }
+        RigLibrary.animationOrNull(exerciseId)?.let { animation -> StillData(animation) }
     }
     val shape = RoundedCornerShape(Space.md)
     if (still == null) {
@@ -123,7 +131,14 @@ fun ClipStill(exerciseId: String, modifier: Modifier = Modifier) {
         }
         return
     }
-    Canvas(modifier.clip(shape).background(AppColors.ClipBackdrop)) {
-        drawPrims(still.prims, ViewFit(still.bounds, size.width, size.height, pad = 4f))
+    StaticMeshPicture(
+        cacheKey = "clipStill|$exerciseId",
+        bounds = MeshFrames.framing(still.bounds),
+        pad = 2f,
+        modifier = modifier.clip(shape).background(AppColors.ClipBackdrop),
+        fallback = { drawPrims(still.prims, ViewFit(still.bounds, size.width, size.height, pad = 4f)) },
+    ) { renderer, view, out, options ->
+        MeshFrames.clip(renderer, still.player, 0L, still.player.cameraAt(0L), view, out, options)
+        true
     }
 }

@@ -121,7 +121,7 @@ internal object HighlightShapes {
     }
 
     /** How much wider than the anatomical patch the soft wash spreads, per kind (tendon and joint patches are small). */
-    private fun spread(kind: HighlightKind): Float = when (kind) {
+    internal fun spread(kind: HighlightKind): Float = when (kind) {
         HighlightKind.MUSCLE -> 1.9f
         HighlightKind.TENDON -> 2.6f
         HighlightKind.JOINT -> 1.8f
