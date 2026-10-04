@@ -268,6 +268,18 @@ class SessionEngine(val plan: SessionPlan) {
         }
     }
 
+    /**
+     * Reps finished when a tempo set is stopped now. The rep in progress counts once it is in its last phase (the
+     * lifter taps Next as the last phase ends); during the 3 s lead-in nothing has been done yet.
+     */
+    private fun repsDoneNow(nowMs: Long): Int {
+        val t = timer ?: return 0
+        val snap = t.snapshot(nowMs)
+        val rep = snap.phase?.rep ?: return 0
+        val inLastPhaseOfRep = t.phases.getOrNull(snap.phaseIndex + 1)?.rep != rep
+        return rep - 1 + if (inLastPhaseOfRep) 1 else 0
+    }
+
     private fun computeSuggestion(nowMs: Long, completed: Boolean): SetSuggestion {
         val item = currentItem() ?: return SetSuggestion(null, null)
         return when (item.kind) {
@@ -286,8 +298,7 @@ class SessionEngine(val plan: SessionPlan) {
                 if (completed || timer == null) {
                     SetSuggestion(planned, null)
                 } else {
-                    val rep = timer?.snapshot(nowMs)?.phase?.rep
-                    SetSuggestion(((rep ?: 1) - 1).coerceIn(0, planned), null)
+                    SetSuggestion(repsDoneNow(nowMs).coerceIn(0, planned), null)
                 }
             }
             StepKind.FLOW -> SetSuggestion(null, null)

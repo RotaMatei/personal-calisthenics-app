@@ -106,6 +106,40 @@ class SessionEngineTest {
     }
 
     @Test
+    fun nextInTheLastPhaseOfARepCountsThatRep() {
+        val d = driver()
+        d.engine.start(d.now)
+        d.untilMode(SessionMode.READY)
+        while (d.engine.snapshot(d.now).item!!.kind == StepKind.ISOMETRIC) {
+            d.engine.startSet(d.now); d.engine.finishSetEarly(d.now)
+            d.engine.logSet(d.now, null, 15, null)
+            d.engine.skipRest(d.now)
+        }
+        val tempo = d.engine.snapshot(d.now).item!!.tempo!!
+        d.engine.startSet(d.now)
+        // Lead-in, then two full reps, then 100 ms before the end of the third rep: still in its last phase.
+        d.advance(3_000L + 3L * tempo.repSeconds * 1000L - 200L)
+        d.engine.finishSetEarly(d.now)
+        assertEquals(3, d.engine.snapshot(d.now).suggestion.reps)
+    }
+
+    @Test
+    fun nextDuringTheLeadInLogsNoReps() {
+        val d = driver()
+        d.engine.start(d.now)
+        d.untilMode(SessionMode.READY)
+        while (d.engine.snapshot(d.now).item!!.kind == StepKind.ISOMETRIC) {
+            d.engine.startSet(d.now); d.engine.finishSetEarly(d.now)
+            d.engine.logSet(d.now, null, 15, null)
+            d.engine.skipRest(d.now)
+        }
+        d.engine.startSet(d.now)
+        d.advance(1_000L)
+        d.engine.finishSetEarly(d.now)
+        assertEquals(0, d.engine.snapshot(d.now).suggestion.reps)
+    }
+
+    @Test
     fun restUsesRirAndColdModeCapsPairedExercises() {
         val d = driver(PlanOptions(WorkoutDay.A, coldMode = true))
         d.engine.start(d.now)
