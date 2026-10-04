@@ -57,6 +57,36 @@ builds everything once pushes work.
       toggles, weekday label, keep-screen-on for the whole session, abandoned-session cleanup; all spec sections covered)
 - [x] M14 CI green (needs GitHub push access) and debug APK artifact produced (green on 2026-10-03: run 37161308156, artifact calisthenics-debug-apk)
 
+## Round 2: user feedback after testing the first APK (2026-10-04) - BINDING requirements
+The user tested the app on a phone: it runs and moves smoothly, but it needs these improvements. Work them in order.
+Claim rule: an interactive session started on these at 2026-10-04 09:35 (Europe/Bucharest). A scheduled run should skip
+milestones marked `(claimed)` unless `git log origin/main -1` is more than 2 hours old, then take over the first unchecked one.
+
+- [ ] M15 (claimed) **Rig animation fixes.** (a) Elbows do not bend in the pull-up clip, and the same is true for every
+      exercise where the elbows should flex (pull-ups, chin-ups, Australian pull-ups, dips, push-up variants, pike and
+      pseudo-planche push-ups, ...). Audit every exercise's keyframes, make the elbow angle really change between Position A
+      and B, and add a test that fails when a bending-elbow exercise has no elbow flexion. (b) Warm-up/drill clips that cover
+      several rotations (joint circles: neck, shoulders, elbows, wrists, ...) currently show only one of them. The clip must
+      play every rotation in turn, with the current joint named on screen.
+- [ ] M16 (claimed) **Visual quality of the 3D figure.** (a) Targeted joints and muscles must NOT be painted as yellow or red
+      blobs. Show the tension as a soft hue wash over the model's body surface instead (graded intensity, still pulsing with
+      the movement phase, still matched to the real stress of that exact exercise per M5c). (b) Make the figure more realistic:
+      better shading and proportions, muscle definition, clothing, face and hair. Limit: it is rendered by our own Canvas
+      painter (no 3D engine, no downloadable models in this workspace), so "realistic" means as far as that allows.
+- [ ] M17 (claimed) **UI redesign.** The UI feels cluttered and badly spaced. Redo all four tabs with a consistent spacing scale,
+      fewer simultaneous cards, clearer hierarchy. Use a calmer, less contrasty dark palette: the saturated yellow and blue hurt
+      the user's eyes, so use muted tones (soft, desaturated accents) everywhere, including charts and the heatmap.
+- [ ] M18 (claimed) **Workout details page.** Pressing a workout must NOT start it. It opens a details page that lists every
+      exercise with the exact number of sets and reps (or hold seconds) and the rest in minutes. Each row shows the picture of
+      the correct position; pressing it extends a drawer-like panel that shows the looping 3D video instead, with the reps
+      and the description under it. The Start button lives on this page.
+- [ ] M19 (claimed) **Rep-exercise player screen.** For every exercise counted in reps (no duration), the whole screen shows the
+      3D video and a Next button sits at the bottom. (Open question for the user: keep the tempo beeps/vibration running
+      behind this screen? See the answer recorded below once given.)
+- [ ] M20 (claimed) **New logo.** A better, more suitable app icon (adaptive launcher icon plus the notification icon) that
+      fits calisthenics and tendon health. Keep it simple and readable at small sizes.
+- [ ] M21 Re-audit against these requirements and `docs/SPEC.md`, update tests and README, CI green, new debug APK artifact.
+
 ## Auto-resume
 - Scheduled task "Calisthenics app auto-resume" (trig_01NAmLe2tPTDAtFJZ7zbnBqD) starts a fresh session hourly at :48 and
   follows this file. GitHub pushes work (App access confirmed 2026-10-03); CI "Core unit tests" passes under real Gradle,
