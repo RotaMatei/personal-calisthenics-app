@@ -27,6 +27,12 @@ jobs:
           set -o pipefail
           ./gradlew :app:assembleDebug --stacktrace 2>&1 | tee build.log
 
+      # The 3D body mesh must ship inside the APK (the app opens it as the asset human.bin).
+      - name: Check the APK contains the body mesh
+        run: |
+          unzip -l app/build/outputs/apk/debug/app-debug.apk | tee apk-listing.txt | grep -E 'assets/human\.bin'
+          echo "APK size: $(stat -c %s app/build/outputs/apk/debug/app-debug.apk) bytes"
+
       # Compile errors are not visible through the API, so surface them as annotations.
       - name: Report build errors
         if: failure()
