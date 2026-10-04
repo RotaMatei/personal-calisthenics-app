@@ -45,7 +45,11 @@ import com.personal.calisthenics.core.model.WorkoutDay
 import com.personal.calisthenics.core.plan.Deload
 import com.personal.calisthenicsguide.data.Repository
 import com.personal.calisthenicsguide.data.SettingKeys
+import com.personal.calisthenicsguide.ui.components.AppCard
+import com.personal.calisthenicsguide.ui.components.ScreenTitle
+import com.personal.calisthenicsguide.ui.components.SectionLabel
 import com.personal.calisthenicsguide.ui.theme.AppColors
+import com.personal.calisthenicsguide.ui.theme.Space
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
@@ -54,9 +58,9 @@ import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle as DateTextStyle
 import java.util.Locale
 
-private val DayA = Color(0xFFFFC400)
-private val DayB = Color(0xFF4DD9F0)
-private val DayC = Color(0xFFC792EA)
+private val DayA = AppColors.DayA
+private val DayB = AppColors.DayB
+private val DayC = AppColors.DayC
 
 @Composable
 fun StatsScreen(repository: Repository, modifier: Modifier = Modifier) {
@@ -73,10 +77,10 @@ fun StatsScreen(repository: Repository, modifier: Modifier = Modifier) {
     }
 
     Column(
-        modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = Space.screen, vertical = Space.lg),
+        verticalArrangement = Arrangement.spacedBy(Space.md),
     ) {
-        Text("Stats", style = MaterialTheme.typography.headlineMedium)
+        ScreenTitle("Stats", "How consistent you are, how you progress and how your joints feel.")
 
         // ---- Safety guard first: the warning is the most important thing on this tab.
         val weekly = remember(sets) { VolumeGuard.weeklyVolumes(sets, zone) }
@@ -85,12 +89,12 @@ fun StatsScreen(repository: Repository, modifier: Modifier = Modifier) {
 
         HeatmapCard(sessionDays, blockStart, today, sessions.size, Streaks.weeklyStreak(sessionDays.keys.toList(), today))
 
-        Card(colors = CardDefaults.cardColors(containerColor = AppColors.Surface), shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                Text("Strength progression", style = MaterialTheme.typography.titleMedium, color = AppColors.Accent)
+        AppCard {
+            SectionLabel("Strength progression")
+            Column(verticalArrangement = Arrangement.spacedBy(Space.xl)) {
                 LineChart("L-sit max hold", "s", ChartSeries.maxHoldPerSession(sets, "l_sit"), DayA)
                 LineChart("Planche lean max hold", "s", ChartSeries.maxHoldPerSession(sets, "planche_lean"), DayB)
-                LineChart("Pull-ups: clean reps per workout", "reps", ChartSeries.totalRepsPerSession(sets, setOf("strict_pullups")), AppColors.Good)
+                LineChart("Pull-ups: clean reps per workout", "reps", ChartSeries.totalRepsPerSession(sets, setOf("strict_pullups")), AppColors.Warn)
                 LineChart(
                     "Dips: clean reps per workout", "reps",
                     ChartSeries.totalRepsPerSession(sets, setOf("parallel_bar_dips", "straight_bar_dips")), DayC,
@@ -108,13 +112,12 @@ fun StatsScreen(repository: Repository, modifier: Modifier = Modifier) {
 @Composable
 private fun SafetyGuardCard(check: com.personal.calisthenics.core.analytics.VolumeCheck) {
     val warn = check.warning
-    Card(
-        colors = CardDefaults.cardColors(containerColor = if (warn != null) AppColors.Danger.copy(alpha = 0.22f) else AppColors.Surface),
-        shape = RoundedCornerShape(20.dp),
-        modifier = Modifier.fillMaxWidth().then(if (warn != null) Modifier.border(2.dp, AppColors.Danger, RoundedCornerShape(20.dp)) else Modifier),
+    AppCard(
+        container = if (warn != null) AppColors.Danger.copy(alpha = 0.14f) else AppColors.Surface,
+        modifier = if (warn != null) Modifier.border(1.dp, AppColors.Danger.copy(alpha = 0.6f), RoundedCornerShape(Space.corner)) else Modifier,
     ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Tendon Safety Guard", style = MaterialTheme.typography.titleMedium, color = if (warn != null) AppColors.Danger else AppColors.Accent)
+        Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
+            SectionLabel("Tendon safety guard", color = if (warn != null) AppColors.Danger else AppColors.TextSecondary)
             if (warn != null) Text(warn, style = MaterialTheme.typography.titleMedium)
             Text(
                 "This week: ${check.current.pullReps} pull reps, ${check.current.pushReps} push reps",
@@ -148,9 +151,9 @@ private fun HeatmapCard(sessionDays: Map<LocalDate, WorkoutDay>, blockStart: Loc
     var monthOffset by rememberSaveable { mutableStateOf(0) }
     val month = YearMonth.from(today).plusMonths(monthOffset.toLong())
     val data = remember(sessionDays, month, blockStart, today) { Heatmap.month(month, sessionDays, blockStart, today) }
-    Card(colors = CardDefaults.cardColors(containerColor = AppColors.Surface), shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Consistency", style = MaterialTheme.typography.titleMedium, color = AppColors.Accent)
+    AppCard {
+        Column(verticalArrangement = Arrangement.spacedBy(Space.md)) {
+            SectionLabel("Consistency")
             Row(verticalAlignment = Alignment.CenterVertically) {
                 OutlinedButton(onClick = { monthOffset-- }, modifier = Modifier.heightIn(min = 48.dp)) { Text("<") }
                 Text(
@@ -181,11 +184,11 @@ private fun HeatmapCard(sessionDays: Map<LocalDate, WorkoutDay>, blockStart: Loc
                                 val worked = cell.kind == CellKind.WORKOUT_A || cell.kind == CellKind.WORKOUT_B || cell.kind == CellKind.WORKOUT_C
                                 var mod = Modifier.fillMaxSize().background(fill, RoundedCornerShape(8.dp))
                                 if (cell.deloadWeek) mod = mod.border(1.5.dp, AppColors.Info.copy(alpha = 0.7f), RoundedCornerShape(8.dp))
-                                if (cell.isToday) mod = mod.border(2.5.dp, Color.White, RoundedCornerShape(8.dp))
+                                if (cell.isToday) mod = mod.border(1.5.dp, AppColors.TextPrimary, RoundedCornerShape(8.dp))
                                 Box(mod, contentAlignment = Alignment.Center) {
                                     Text(
                                         if (worked) (sessionDays[cell.date]?.label ?: "") else cell.date.dayOfMonth.toString(),
-                                        color = if (worked) Color.Black else AppColors.TextSecondary,
+                                        color = if (worked) AppColors.AccentOn else AppColors.TextSecondary,
                                         fontWeight = if (worked) FontWeight.Bold else FontWeight.Normal,
                                         style = MaterialTheme.typography.bodyMedium,
                                     )
@@ -198,7 +201,7 @@ private fun HeatmapCard(sessionDays: Map<LocalDate, WorkoutDay>, blockStart: Loc
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
                 Legend(DayA, "Day A"); Legend(DayB, "Day B"); Legend(DayC, "Day C"); Legend(AppColors.SurfaceHigh, "Rest")
             }
-            Text("Cyan outline = deload week", style = MaterialTheme.typography.bodyMedium, color = AppColors.Info)
+            Text("Outlined days are in a deload week", style = MaterialTheme.typography.bodyMedium, color = AppColors.TextSecondary)
             Text(
                 "${data.workoutCount} workout${if (data.workoutCount == 1) "" else "s"} this month  |  $total total  |  " +
                     "$streak-week streak (3 sessions per week)",
@@ -224,9 +227,9 @@ private fun Legend(color: Color, text: String) {
 private fun JointHistoryCard(records: List<com.personal.calisthenicsguide.data.SessionRecord>, zone: ZoneId) {
     val fmt = remember { DateTimeFormatter.ofPattern("EEE d MMM", Locale.ENGLISH) }
     val rated = records.filter { it.rating != null }
-    Card(colors = CardDefaults.cardColors(containerColor = AppColors.Surface), shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Joint health log", style = MaterialTheme.typography.titleMedium, color = AppColors.Accent)
+    AppCard {
+        Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
+            SectionLabel("Joint health log")
             if (rated.isEmpty()) {
                 Text("Ratings you give after each workout (1 = fine, 5 = very stiff) appear here.", style = MaterialTheme.typography.bodyMedium, color = AppColors.TextSecondary)
             } else {

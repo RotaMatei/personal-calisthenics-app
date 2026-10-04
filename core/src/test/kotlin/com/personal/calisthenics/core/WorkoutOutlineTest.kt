@@ -53,6 +53,8 @@ class WorkoutOutlineTest {
         assertEquals("45 s", rows.single { it.stepId == "w0_jacks" }.prescription)
         assertEquals("2 x 30 s", rows.single { it.stepId == "p3_german" }.prescription)
         assertEquals("1 min 30 s", rows.single { it.stepId == "p3_squat" }.prescription)
+        rows.forEach { assertTrue("${it.stepId} explains its drill", it.details.isNotEmpty() && it.details.all { d -> d.isNotBlank() }) }
+        assertEquals(2, rows.single { it.stepId == "p3_german" }.details.size)
     }
 
     @Test

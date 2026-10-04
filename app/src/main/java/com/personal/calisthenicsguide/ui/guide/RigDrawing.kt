@@ -32,6 +32,7 @@ import com.personal.calisthenics.core.rig.RadialShade
 import com.personal.calisthenics.core.rig.Shading
 import com.personal.calisthenics.core.rig.Vec2
 import com.personal.calisthenics.core.rig.WashPrim
+import com.personal.calisthenicsguide.ui.theme.AppColors
 import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.min
@@ -180,8 +181,8 @@ fun DrawScope.drawPrims(prims: List<Prim>, fit: ViewFit) {
     }
 }
 
-private val GoodColor = Color(0xFF4ADE80)
-private val BadColor = Color(0xFFF87171)
+private val GoodColor = AppColors.Good
+private val BadColor = AppColors.Danger
 
 /** Arrow + text label of a DO/DON'T picture (green = correct, red = wrong). */
 fun DrawScope.drawAnnotation(l: AnnotationDraw, fit: ViewFit, measurer: TextMeasurer, minTextPx: Float) {

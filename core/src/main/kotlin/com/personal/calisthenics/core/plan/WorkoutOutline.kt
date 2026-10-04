@@ -19,6 +19,8 @@ data class OutlineRow(
     val cue: String,
     /** Extra facts: superset partner, deload change, per-side. */
     val notes: List<String>,
+    /** How each drill of a warm-up or stretch goes (one line per part); empty for sets. */
+    val details: List<String> = emptyList(),
 )
 
 data class OutlineSection(
@@ -77,7 +79,14 @@ object WorkoutOutline {
             tempo = step.tempo?.notation,
             cue = step.cue,
             notes = notes,
+            details = drillDetails(step),
         )
+    }
+
+    private fun drillDetails(step: PlannedStep): List<String> = when {
+        step.kind != StepKind.FLOW -> emptyList()
+        step.flowItems.size == 1 -> listOf(step.flowItems[0].instruction)
+        else -> step.flowItems.map { "${it.label} (${duration(it.seconds)}): ${it.instruction}" }
     }
 
     private fun prescription(step: PlannedStep): String = when (step.kind) {

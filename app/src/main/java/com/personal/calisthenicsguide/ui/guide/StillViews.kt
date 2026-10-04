@@ -30,6 +30,7 @@ import com.personal.calisthenics.core.rig.CalloutSide
 import com.personal.calisthenics.core.rig.Camera
 import com.personal.calisthenics.core.rig.DetailArt
 import com.personal.calisthenics.core.rig.Stills
+import com.personal.calisthenicsguide.ui.theme.AppColors
 
 /** One labelled DO/DON'T body picture. Pass the same [bounds] for a wrong/right pair so they share one scale. */
 @Composable
@@ -48,7 +49,7 @@ fun StillView(
             .fillMaxWidth()
             .height(height)
             .clip(RoundedCornerShape(14.dp))
-            .background(Color(0xFF111318)),
+            .background(AppColors.ClipBackdrop),
     ) {
         if (frame == null) return@Canvas
         val fit = ViewFit(bounds, size.width, size.height, pad = 6f)
@@ -70,7 +71,7 @@ fun DetailView(key: String, modifier: Modifier = Modifier) {
                     .fillMaxWidth()
                     .height(300.dp)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(Color(0xFF111318)),
+                    .background(AppColors.ClipBackdrop),
             ) {
                 val gutter = size.width * 0.27f
                 val fit = ViewFit(panel.bounds, size.width - 2 * gutter, size.height, pad = 4f)
@@ -86,8 +87,8 @@ fun DetailView(key: String, modifier: Modifier = Modifier) {
                     )
                     val ly = 40.dp.toPx() + c.order * 62.dp.toPx()
                     val lx = if (c.side == CalloutSide.LEFT) gutter - 8.dp.toPx() else size.width - gutter + 8.dp.toPx()
-                    drawLine(Color(0xFFFAFAFA), Offset(lx, ly), Offset(tx, ty), strokeWidth = 2f, cap = StrokeCap.Round)
-                    drawCircle(Color(0xFFFAFAFA), 5f, Offset(tx, ty))
+                    drawLine(AppColors.TextPrimary, Offset(lx, ly), Offset(tx, ty), strokeWidth = 2f, cap = StrokeCap.Round)
+                    drawCircle(AppColors.TextPrimary, 5f, Offset(tx, ty))
                     val textX = if (c.side == CalloutSide.LEFT) lx - layout.size.width else lx
                     drawText(layout, topLeft = Offset(textX, ly - layout.size.height / 2f))
                 }

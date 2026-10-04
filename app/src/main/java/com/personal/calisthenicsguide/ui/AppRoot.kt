@@ -42,6 +42,7 @@ import com.personal.calisthenicsguide.ui.stats.StatsScreen
 import com.personal.calisthenicsguide.ui.dashboard.DashboardViewModel
 import com.personal.calisthenicsguide.ui.theme.AppColors
 import com.personal.calisthenicsguide.ui.workout.WorkoutScreen
+import com.personal.calisthenicsguide.ui.workout.isRepPlayer
 import com.personal.calisthenicsguide.ui.theme.CalisthenicsTheme
 
 enum class Tab(val title: String, val icon: ImageVector) {
@@ -84,24 +85,28 @@ fun AppRoot() {
             if (needsPermission) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS) else startNow()
         }
 
+        val workoutFullScreen = tabIndex == Tab.WORKOUT.ordinal && isRepPlayer(runnerState.snapshot)
         Scaffold(
             containerColor = AppColors.Background,
             bottomBar = {
-                NavigationBar(containerColor = AppColors.Surface) {
-                    Tab.entries.forEach { tab ->
-                        NavigationBarItem(
-                            selected = tabIndex == tab.ordinal,
-                            onClick = { tabIndex = tab.ordinal },
-                            icon = { Icon(tab.icon, contentDescription = tab.title) },
-                            label = { Text(tab.title) },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = AppColors.AccentOn,
-                                selectedTextColor = AppColors.Accent,
-                                indicatorColor = AppColors.Accent,
-                                unselectedIconColor = AppColors.TextSecondary,
-                                unselectedTextColor = AppColors.TextSecondary,
-                            ),
-                        )
+                // The rep player takes the whole screen, so the bar steps aside while a rep set runs.
+                if (!workoutFullScreen) {
+                    NavigationBar(containerColor = AppColors.Surface, tonalElevation = 0.dp) {
+                        Tab.entries.forEach { tab ->
+                            NavigationBarItem(
+                                selected = tabIndex == tab.ordinal,
+                                onClick = { tabIndex = tab.ordinal },
+                                icon = { Icon(tab.icon, contentDescription = tab.title) },
+                                label = { Text(tab.title) },
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = AppColors.Accent,
+                                    selectedTextColor = AppColors.Accent,
+                                    indicatorColor = AppColors.AccentSoft,
+                                    unselectedIconColor = AppColors.TextSecondary,
+                                    unselectedTextColor = AppColors.TextSecondary,
+                                ),
+                            )
+                        }
                     }
                 }
             },
@@ -111,13 +116,10 @@ fun AppRoot() {
                     Tab.HOME -> DashboardScreen(
                         state = dashboardState,
                         sessionActive = runnerState.active,
-                        onStartWorkout = ::beginWorkout,
-                        onResumeWorkout = { tabIndex = Tab.WORKOUT.ordinal },
+                        onOpenWorkout = { tabIndex = Tab.WORKOUT.ordinal },
                         onChecklist = dashboard::setChecklist,
-                        onColdMode = dashboard::setColdMode,
                         onSound = dashboard::setSound,
                         onVibration = dashboard::setVibration,
-                        onPickDay = dashboard::overrideDay,
                     )
                     Tab.WORKOUT -> {
                         val progression by app.repository.progression.collectAsState(initial = emptyMap())
@@ -125,8 +127,9 @@ fun AppRoot() {
                             runnerState = runnerState,
                             runner = app.sessionRunner,
                             progression = progression,
-                            coldModeSetting = dashboardState?.coldMode ?: false,
+                            dashboard = dashboardState,
                             onColdMode = dashboard::setColdMode,
+                            onPickDay = dashboard::overrideDay,
                             onStart = ::beginWorkout,
                         )
                     }

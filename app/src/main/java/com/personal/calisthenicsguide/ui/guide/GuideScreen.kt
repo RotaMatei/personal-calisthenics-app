@@ -52,7 +52,11 @@ import com.personal.calisthenics.core.rig.Camera
 import com.personal.calisthenics.core.rig.Stills
 import com.personal.calisthenics.core.seed.SeedData
 import com.personal.calisthenicsguide.data.Repository
+import com.personal.calisthenicsguide.ui.components.AppCard
+import com.personal.calisthenicsguide.ui.components.ScreenTitle
+import com.personal.calisthenicsguide.ui.components.SectionLabel
 import com.personal.calisthenicsguide.ui.theme.AppColors
+import com.personal.calisthenicsguide.ui.theme.Space
 import kotlinx.coroutines.launch
 
 @Composable
@@ -74,31 +78,23 @@ private fun ExerciseList(onOpen: (String) -> Unit, modifier: Modifier) {
     val grouped = remember { SeedData.exercises.groupBy { it.category }.toSortedMap(compareBy<MovementCategory> { it.ordinal }) }
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(Space.screen),
+        verticalArrangement = Arrangement.spacedBy(Space.sm),
     ) {
         item {
-            Text("Exercise guide", style = MaterialTheme.typography.headlineMedium)
-            Text(
-                "${SeedData.exercises.size} exercises with looping 3D clips, stress colouring, DO / DON'T cards and a progression matrix.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = AppColors.TextSecondary,
+            ScreenTitle(
+                "Exercise guide",
+                "${SeedData.exercises.size} exercises with looping 3D clips, DO / DON'T cards and a progression matrix.",
             )
         }
         grouped.forEach { (category: MovementCategory, list: List<Exercise>) ->
             item(key = "header_${category.name}") {
-                Text(category.displayName, style = MaterialTheme.typography.titleMedium, color = AppColors.Accent, modifier = Modifier.padding(top = 10.dp))
+                SectionLabel(category.displayName, Modifier.padding(top = Space.lg))
             }
             items(list, key = { it.id }) { ex ->
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = AppColors.Surface),
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth().clickable { onOpen(ex.id) },
-                ) {
-                    Column(Modifier.padding(16.dp).heightIn(min = 48.dp)) {
-                        Text(ex.name, style = MaterialTheme.typography.titleMedium)
-                        Text(ex.summary, style = MaterialTheme.typography.bodyMedium, color = AppColors.TextSecondary, maxLines = 2)
-                    }
+                AppCard(onClick = { onOpen(ex.id) }) {
+                    Text(ex.name, style = MaterialTheme.typography.titleMedium)
+                    Text(ex.summary, style = MaterialTheme.typography.bodyMedium, color = AppColors.TextSecondary, maxLines = 2)
                 }
             }
         }
@@ -109,7 +105,7 @@ private fun ExerciseList(onOpen: (String) -> Unit, modifier: Modifier) {
 
 @Composable
 private fun SectionTitle(text: String) {
-    Text(text, style = MaterialTheme.typography.titleLarge, color = AppColors.Accent, modifier = Modifier.padding(top = 14.dp, bottom = 4.dp))
+    Text(text, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = Space.xl, bottom = Space.xs))
 }
 
 @Composable
@@ -126,7 +122,7 @@ private fun ExerciseDetail(exercise: Exercise, repository: Repository, onBack: (
         latest != null && ProgressionGate.stage1Suggested(exercise, mine.filter { it.sessionId == latest })
     }
 
-    Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp)) {
+    Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = Space.screen, vertical = Space.md)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             OutlinedButton(onClick = onBack, modifier = Modifier.heightIn(min = 48.dp)) { Text("Back") }
             Spacer(Modifier.size(12.dp))
@@ -174,7 +170,7 @@ private fun ExerciseDetail(exercise: Exercise, repository: Repository, onBack: (
 @Composable
 private fun Bullet(text: String) {
     Row(Modifier.padding(vertical = 3.dp)) {
-        Text("-  ", color = AppColors.Accent, style = MaterialTheme.typography.bodyLarge)
+        Text("-  ", color = AppColors.TextSecondary, style = MaterialTheme.typography.bodyLarge)
         Text(text, style = MaterialTheme.typography.bodyLarge)
     }
 }
@@ -242,12 +238,8 @@ private fun HighlightLegend(highlights: List<Highlight>) {
 private fun DoDontCard(card: DoDont, highlights: List<Highlight>) {
     var camera by remember { mutableStateOf(Camera.THREE_QUARTER) }
     val isDetail = card.wrongPoseKey.startsWith("detail.")
-    Card(
-        colors = CardDefaults.cardColors(containerColor = AppColors.Surface),
-        shape = RoundedCornerShape(20.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-    ) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    AppCard(Modifier.padding(vertical = Space.xs)) {
+        Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
             Text(card.title, style = MaterialTheme.typography.titleMedium)
             if (isDetail) {
                 Text(card.wrongLabel, color = AppColors.Danger, style = MaterialTheme.typography.titleMedium)
