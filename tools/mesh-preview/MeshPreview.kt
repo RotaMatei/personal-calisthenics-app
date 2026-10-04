@@ -1,7 +1,7 @@
 package com.personal.calisthenics.tools
 
 import com.personal.calisthenics.core.mesh.HumanMesh
-import com.personal.calisthenics.core.mesh.MeshFrames
+import com.personal.calisthenics.core.mesh.MeshFraming
 import com.personal.calisthenics.core.mesh.MeshOptions
 import com.personal.calisthenics.core.mesh.MeshRenderer
 import com.personal.calisthenics.core.mesh.ViewMap
@@ -51,7 +51,7 @@ object MeshPreview {
         }
         val progress = when (frame) { "A" -> 0f; "B" -> 1f; else -> anim.progressAt(timeMs) }
         val draws = SeedData.exerciseOrNull(id)?.highlights.orEmpty().toDraws(progress)
-        val bounds = MeshFrames.framing(ClipPlayer(anim, emptyList()).boundsAnyYaw) // the framing the app uses
+        val bounds = MeshFraming.clip(ClipPlayer(anim, emptyList()), anyYaw = true) // the framing the app uses
         val view = ViewMap(bounds, w.toFloat(), h.toFloat(), pad = 6f)
         val pixels = IntArray(w * h)
         val t0 = System.nanoTime()

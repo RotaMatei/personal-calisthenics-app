@@ -16,6 +16,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -35,7 +36,7 @@ import com.personal.calisthenics.core.rig.Camera
 import com.personal.calisthenics.core.rig.ClipPlayer
 import com.personal.calisthenics.core.rig.ClipSync
 import com.personal.calisthenics.core.rig.RigAnimation
-import com.personal.calisthenics.core.rig.RigFraming
+import com.personal.calisthenics.core.mesh.MeshFraming
 import com.personal.calisthenics.core.rig.RigLibrary
 import com.personal.calisthenics.core.seed.SeedData
 import com.personal.calisthenicsguide.ui.theme.AppColors
@@ -84,14 +85,6 @@ fun ClipView(exerciseId: String, highlights: List<Highlight>, modifier: Modifier
         }
     }
 
-    val fixedBounds = remember(exerciseId, view) {
-        when (view) {
-            ClipView.ORBIT -> null
-            ClipView.SIDE -> RigFraming.bounds(animation, Camera.SIDE)
-            ClipView.FRONT -> RigFraming.bounds(animation, Camera.FRONT)
-        }
-    }
-
     Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Box(
             Modifier
@@ -107,7 +100,14 @@ fun ClipView(exerciseId: String, highlights: List<Highlight>, modifier: Modifier
         ) {
             LivePicture(
                 player = player,
-                bounds = fixedBounds ?: player.boundsAnyYaw,
+                boundsKey = view,
+                bounds = { p ->
+                    when (view) {
+                        ClipView.ORBIT -> MeshFraming.clip(p, anyYaw = true)
+                        ClipView.SIDE -> MeshFraming.bounds(animation, listOf(Camera.SIDE))
+                        ClipView.FRONT -> MeshFraming.bounds(animation, listOf(Camera.FRONT))
+                    }
+                },
                 pad = 8f,
                 modifier = Modifier.fillMaxWidth().height(height),
             ) {
@@ -121,10 +121,10 @@ fun ClipView(exerciseId: String, highlights: List<Highlight>, modifier: Modifier
                 )
             }
             // Multi-part clips (joint circles) name the part being played: Neck, Shoulders, Elbows, Hips, Ankles.
-            val caption = animation.captionAt(timeMs)
-            if (caption != null) {
+            val caption by remember(animation) { derivedStateOf { animation.captionAt(timeMs) } }
+            caption?.let { text ->
                 Text(
-                    caption,
+                    text,
                     color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.align(Alignment.TopCenter).padding(12.dp),

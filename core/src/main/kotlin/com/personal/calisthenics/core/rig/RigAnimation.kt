@@ -21,7 +21,16 @@ data class Keyframe(
  * A looping exercise demonstration: a scene plus an ordered, cyclic list of keyframes. A typical rep is
  * Position A (start) then Position B (end range), and the loop returns from B to A.
  */
-class RigAnimation(val scene: RigScene, val keyframes: List<Keyframe>) {
+class RigAnimation(
+    val scene: RigScene,
+    val keyframes: List<Keyframe>,
+    /**
+     * Poses that [progressAt] measures from (Position A) and to (Position B) when they are not simply the first keyframe
+     * and its farthest pose: a clip retimed to a rep tempo starts at the top of the rep, which for pull-ups is Position B.
+     */
+    private val progressFrom: Pose? = null,
+    private val progressTo: Pose? = null,
+) {
     init {
         require(keyframes.size >= 2) { "An animation needs at least two keyframes" }
         require(keyframes.all { it.pose.anchorAt == keyframes[0].pose.anchorAt }) { "All keyframes must share an anchor" }
@@ -82,7 +91,8 @@ class RigAnimation(val scene: RigScene, val keyframes: List<Keyframe>) {
     /** The keyframe pose that differs most from the first one (the "end of range" for a rep). */
     fun endPose(): Pose = keyframes.drop(1).maxByOrNull { distance(keyframes.first().pose, it.pose) }!!.pose
 
-    private val spanToEnd: Float by lazy { distance(keyframes.first().pose, endPose()) }
+    private val fromPose: Pose get() = progressFrom ?: keyframes.first().pose
+    private val spanToEnd: Float by lazy { distance(fromPose, progressTo ?: endPose()) }
 
     /**
      * How far the clip is from Position A (0) to the end-of-range Position B (1) at [timeMs]; it drives how strongly
@@ -90,7 +100,7 @@ class RigAnimation(val scene: RigScene, val keyframes: List<Keyframe>) {
      */
     fun progressAt(timeMs: Long): Float {
         if (spanToEnd < 1e-3f) return 0f
-        return (distance(keyframes.first().pose, poseAt(timeMs)) / spanToEnd).coerceIn(0f, 1f)
+        return (distance(fromPose, poseAt(timeMs)) / spanToEnd).coerceIn(0f, 1f)
     }
 
     private fun distance(a: Pose, b: Pose): Float {
@@ -119,6 +129,15 @@ object RigFraming {
 
     /** Like [bounds] but only for the poses at [times] (a thumbnail shows one pose, so it needs no sweep of the loop). */
     fun boundsAt(animation: RigAnimation, times: List<Long>, camera: Camera, margin: Float = 10f): Bounds {
+        // Measuring renders the figure many times (hundreds of ms on a phone), and the same clip is framed again every
+        // time a screen shows it, so remember the answer. The key holds references to the clip's own objects.
+        val key = listOf(animation.scene, animation.keyframes, times, camera, margin)
+        return cache.getOrPut(key) { measure(animation, times, camera, margin) }
+    }
+
+    private val cache = java.util.concurrent.ConcurrentHashMap<List<Any>, Bounds>()
+
+    private fun measure(animation: RigAnimation, times: List<Long>, camera: Camera, margin: Float): Bounds {
         var minX = Float.MAX_VALUE
         var minY = Float.MAX_VALUE
         var maxX = -Float.MAX_VALUE

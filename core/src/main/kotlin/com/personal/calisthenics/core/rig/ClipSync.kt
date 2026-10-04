@@ -30,7 +30,7 @@ object ClipSync {
      * The exercise's motion retimed to a rep tempo, so on screen it lowers, pauses, drives and squeezes exactly as the
      * beeps do. Works for the two-pose rep clips (position A, position B): the pose with the higher body is the top
      * of the rep (lock-out, chin over the bar, standing), the other the bottom. Clips of any other shape are only
-     * stretched to the rep length.
+     * stretched to the rep length. The result still reports [RigAnimation.progressAt] from the authored Position A to B.
      */
     fun animationAtTempo(base: RigAnimation, tempo: Tempo): RigAnimation {
         val repMs = maxOf(tempo.repSeconds, 3) * 1000L
@@ -44,6 +44,9 @@ object ClipSync {
                 Keyframe(top, holdMs = tempo.topPauseSec * 1000L, moveMs = maxOf(tempo.eccentricSec, 1) * 1000L),
                 Keyframe(bottom, holdMs = tempo.bottomPauseSec * 1000L, moveMs = maxOf(tempo.concentricSec, 1) * 1000L),
             ),
+            // The highlights pulse with the distance from the authored Position A, wherever the retimed clip starts.
+            progressFrom = base.startPose(),
+            progressTo = base.endPose(),
         )
     }
 

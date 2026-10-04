@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +31,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -99,12 +101,26 @@ fun WorkoutScreen(
         return
     }
     val coldMode = runnerState.plan?.options?.coldMode ?: false
+    // One tap on End must not throw the workout away: ask first (chalky hands miss buttons).
+    var confirmEnd by remember { mutableStateOf(false) }
+    if (confirmEnd) {
+        AlertDialog(
+            onDismissRequest = { confirmEnd = false },
+            title = { Text("End the workout?") },
+            text = { Text("Sets you have already logged are kept. You go on to the joint log.") },
+            confirmButton = {
+                TextButton(onClick = { confirmEnd = false; runner.endEarly() }) { Text("End workout", color = AppColors.Danger) }
+            },
+            dismissButton = { TextButton(onClick = { confirmEnd = false }) { Text("Keep going") } },
+        )
+    }
     Column(modifier.fillMaxSize()) {
-        if (!isRepPlayer(snapshot)) SessionHeader(snapshot, coldMode, onEnd = runner::endEarly)
+        if (!isRepPlayer(snapshot)) SessionHeader(snapshot, coldMode, onEnd = { confirmEnd = true })
         when (snapshot.mode) {
             SessionMode.FLOW -> FlowMode(snapshot, runner)
             SessionMode.READY -> ReadyMode(snapshot, runner)
-            SessionMode.ACTIVE -> if (isRepPlayer(snapshot)) RepPlayerMode(snapshot, runner) else ActiveMode(snapshot, runner)
+            SessionMode.ACTIVE ->
+                if (isRepPlayer(snapshot)) RepPlayerMode(snapshot, runner, onEnd = { confirmEnd = true }) else ActiveMode(snapshot, runner)
             SessionMode.AWAITING_LOG -> LogMode(snapshot, runner, progression)
             SessionMode.RESTING -> RestMode(snapshot, runner)
             SessionMode.FINISHED -> FinishedMode(runner)
@@ -321,7 +337,7 @@ private fun ColumnScope.ActiveMode(snapshot: EngineSnapshot, runner: SessionRunn
 // ------------------------------------------------------------------------------------------------ rep sets: the clip is the screen
 
 @Composable
-private fun ColumnScope.RepPlayerMode(snapshot: EngineSnapshot, runner: SessionRunner) {
+private fun ColumnScope.RepPlayerMode(snapshot: EngineSnapshot, runner: SessionRunner, onEnd: () -> Unit) {
     val item = snapshot.item ?: return
     val timer = snapshot.timer
     val phase = timer?.phase
@@ -350,7 +366,7 @@ private fun ColumnScope.RepPlayerMode(snapshot: EngineSnapshot, runner: SessionR
                 Text(item.title, style = MaterialTheme.typography.titleMedium, maxLines = 2)
                 Text(setLine(item) + "  |  ${targetText(item)}", style = MaterialTheme.typography.bodyMedium, color = AppColors.TextSecondary)
             }
-            TextButton(onClick = runner::endEarly) { Text("End", color = AppColors.Danger) }
+            TextButton(onClick = onEnd) { Text("End", color = AppColors.Danger) }
         }
         Column(
             Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(horizontal = Space.screen, vertical = Space.md),

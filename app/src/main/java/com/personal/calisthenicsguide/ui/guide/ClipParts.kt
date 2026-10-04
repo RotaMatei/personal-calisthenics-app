@@ -26,12 +26,12 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.personal.calisthenics.core.mesh.MeshFrames
+import com.personal.calisthenics.core.mesh.MeshFraming
 import com.personal.calisthenics.core.model.Highlight
 import com.personal.calisthenics.core.rig.Bounds
 import com.personal.calisthenics.core.rig.ClipPlayer
 import com.personal.calisthenics.core.rig.Prim
 import com.personal.calisthenics.core.rig.RigAnimation
-import com.personal.calisthenics.core.rig.RigFraming
 import com.personal.calisthenics.core.rig.RigLibrary
 import com.personal.calisthenicsguide.ui.theme.AppColors
 import com.personal.calisthenicsguide.ui.theme.Space
@@ -100,7 +100,8 @@ fun DrivenClip(
     ) {
         LivePicture(
             player = player,
-            bounds = player.boundsAnyYaw,
+            boundsKey = Unit,
+            bounds = { MeshFraming.clip(it, anyYaw = true) },
             pad = 10f,
             modifier = Modifier.fillMaxSize().padding(top = topReserve, bottom = bottomReserve),
         ) {
@@ -113,7 +114,7 @@ fun DrivenClip(
 private class StillData(val animation: RigAnimation) {
     val player = ClipPlayer(animation, emptyList())
     /** Framing of position A alone from the clip's first camera, so a thumbnail needs no sweep of the whole loop. */
-    val bounds: Bounds = RigFraming.boundsAt(animation, listOf(0L), player.cameraAt(0L))
+    val bounds: Bounds = MeshFraming.pose(animation, 0L, player.cameraAt(0L))
     /** Capsule picture, only needed when the mesh is unavailable. */
     val prims: List<Prim> by lazy { player.frame(0L).prims }
 }
@@ -133,7 +134,7 @@ fun ClipStill(exerciseId: String, modifier: Modifier = Modifier) {
     }
     StaticMeshPicture(
         cacheKey = "clipStill|$exerciseId",
-        bounds = MeshFrames.framing(still.bounds),
+        bounds = still.bounds,
         pad = 2f,
         modifier = modifier.clip(shape).background(AppColors.ClipBackdrop),
         fallback = { drawPrims(still.prims, ViewFit(still.bounds, size.width, size.height, pad = 4f)) },

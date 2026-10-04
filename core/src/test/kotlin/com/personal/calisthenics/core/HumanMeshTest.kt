@@ -1,14 +1,17 @@
 package com.personal.calisthenics.core
 
 import com.personal.calisthenics.core.mesh.HumanMesh
+import com.personal.calisthenics.core.mesh.MeshFraming
 import com.personal.calisthenics.core.mesh.MeshFrames
 import com.personal.calisthenics.core.mesh.MeshOptions
 import com.personal.calisthenics.core.mesh.MeshRenderer
 import com.personal.calisthenics.core.mesh.ViewMap
+import com.personal.calisthenics.core.rig.Bounds
 import com.personal.calisthenics.core.rig.Camera
 import com.personal.calisthenics.core.rig.ClipPlayer
-import com.personal.calisthenics.core.rig.RigFraming
+import com.personal.calisthenics.core.rig.RigAnimation
 import com.personal.calisthenics.core.rig.RigLibrary
+import com.personal.calisthenics.core.rig.Stills
 import com.personal.calisthenics.core.seed.SeedData
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -49,7 +52,7 @@ class HumanMeshTest {
     fun renderingIsDeterministicAndDrawsTheFigureAndFloor() {
         val renderer = MeshRenderer(mesh)
         val anim = RigLibrary.animation("strict_pullups")
-        val view = ViewMap(MeshFrames.framing(ClipPlayer(anim, emptyList()).bounds), 240f, 300f, pad = 6f)
+        val view = ViewMap(MeshFraming.clip(ClipPlayer(anim, emptyList()), anyYaw = true), 240f, 300f, pad = 6f)
         val a = IntArray(240 * 300)
         val b = IntArray(240 * 300)
         val cam = Camera.THREE_QUARTER
@@ -65,7 +68,7 @@ class HumanMeshTest {
     fun stressHighlightsTintTheClayAndStaySoft() {
         val renderer = MeshRenderer(mesh)
         val anim = RigLibrary.animation("strict_pullups")
-        val view = ViewMap(MeshFrames.framing(ClipPlayer(anim, emptyList()).bounds), 240f, 300f, pad = 6f)
+        val view = ViewMap(MeshFraming.clip(ClipPlayer(anim, emptyList()), anyYaw = true), 240f, 300f, pad = 6f)
         val plain = IntArray(240 * 300)
         val tinted = IntArray(240 * 300)
         val cam = Camera.THREE_QUARTER
@@ -88,27 +91,47 @@ class HumanMeshTest {
         assertFalse(MeshFrames.still(renderer, "no.such.still", Camera.SIDE, emptyList(), view, out))
     }
 
-    @Test
-    fun theMeshFollowsEveryExercisePoseAndStaysInsideTheFraming() {
-        val renderer = MeshRenderer(mesh)
-        var worst = -Float.MAX_VALUE
-        var worstId = ""
+    /** Room (cm) between the mesh and the edge of the framing, smallest over every exercise, pose and camera in [cases]. */
+    private fun spare(renderer: MeshRenderer, cameras: (RigAnimation) -> List<Camera>, bounds: (RigAnimation, List<Camera>) -> Bounds, samples: Int): Pair<Float, String> {
+        var tightest = Float.MAX_VALUE
+        var where = ""
         for (id in RigLibrary.animationIds.sorted()) {
             val anim = RigLibrary.animation(id)
-            val frame = MeshFrames.framing(ClipPlayer(anim, emptyList()).boundsAnyYaw)
-            for (f in 0..3) {
-                val pose = anim.poseAt(anim.loopMs * f / 4)
-                for (yaw in listOf(-70f, -38f, 0f, 60f, 135f, 220f, 300f)) {
-                    val cam = Camera(yaw = yaw, pitch = 12f, perspective = 0.3f)
-                    val b = renderer.bodyBounds(anim.scene, pose, cam)
-                    assertTrue("$id finite", b.minX.isFinite() && b.maxY.isFinite() && b.width > 20f && b.height > 20f)
-                    val over = maxOf(frame.minX - b.minX, frame.minY - b.minY, b.maxX - frame.maxX, b.maxY - frame.maxY)
-                    if (over > worst) { worst = over; worstId = "$id yaw=$yaw f=$f" }
+            val cams = cameras(anim)
+            val frame = bounds(anim, cams)
+            for (cam in cams) {
+                for (f in 0 until samples) {
+                    val b = renderer.bodyBounds(anim.scene, anim.poseAt(anim.loopMs * f / samples), cam)
+                    val room = minOf(b.minX - frame.minX, b.minY - frame.minY, frame.maxX - b.maxX, frame.maxY - b.maxY)
+                    if (room < tightest) { tightest = room; where = "$id yaw=${cam.yaw} t=$f/$samples" }
                 }
             }
         }
-        println("tightest fit of the mesh inside the framing: ${"%.1f".format(-worst)} cm to spare ($worstId)")
-        assertTrue("mesh has only ${-worst} cm to spare in the framing ($worstId)", worst <= -2f)
+        return tightest to where
+    }
+
+    @Test
+    fun theOrbitFramingHoldsTheMeshAtEveryPointOfTheLoopAndEveryDraggedAngle() {
+        val renderer = MeshRenderer(mesh)
+        val dragged = listOf(-70f, -38f, 0f, 17f, 60f, 83f, 135f, 180f, 220f, 300f)
+        val (room, where) = spare(
+            renderer,
+            { dragged.map { Camera(yaw = it, pitch = 12f, perspective = 0.3f) } },
+            { anim, _ -> MeshFraming.clip(ClipPlayer(anim, emptyList()), anyYaw = true) },
+            samples = 24,
+        )
+        println("orbit framing: tightest ${"%.1f".format(room)} cm to spare ($where)")
+        assertTrue("mesh has only $room cm to spare ($where)", room >= 1f)
+    }
+
+    @Test
+    fun theSideAndFrontPresetsHoldTheMeshAtEveryPointOfTheLoop() {
+        val renderer = MeshRenderer(mesh)
+        for (cam in listOf(Camera.SIDE, Camera.FRONT)) {
+            val (room, where) = spare(renderer, { listOf(cam) }, { anim, cams -> MeshFraming.bounds(anim, cams) }, samples = 24)
+            println("yaw ${cam.yaw} framing: tightest ${"%.1f".format(room)} cm to spare ($where)")
+            assertTrue("mesh has only $room cm to spare ($where)", room >= 1f)
+        }
     }
 
     @Test
@@ -119,13 +142,41 @@ class HumanMeshTest {
         for (id in RigLibrary.animationIds.sorted()) {
             val anim = RigLibrary.animation(id)
             val cam = ClipPlayer(anim, emptyList()).cameraAt(0L)
-            val frame = MeshFrames.framing(RigFraming.boundsAt(anim, listOf(0L), cam))
+            val frame = MeshFraming.pose(anim, 0L, cam)
             val b = renderer.bodyBounds(anim.scene, anim.poseAt(0L), cam)
-            val spare = minOf(b.minX - frame.minX, b.minY - frame.minY, frame.maxX - b.maxX, frame.maxY - b.maxY)
-            if (spare < tightest) { tightest = spare; tightestId = id }
+            val room = minOf(b.minX - frame.minX, b.minY - frame.minY, frame.maxX - b.maxX, frame.maxY - b.maxY)
+            if (room < tightest) { tightest = room; tightestId = id }
         }
         println("thumbnail framing: tightest ${"%.1f".format(tightest)} cm to spare ($tightestId)")
         assertTrue("mesh has only $tightest cm to spare in a thumbnail ($tightestId)", tightest >= 1f)
+    }
+
+    @Test
+    fun theDoAndDontStillsHoldTheMeshInAllThreeViewsAlone() {
+        val renderer = MeshRenderer(mesh)
+        var tightest = Float.MAX_VALUE
+        var where = ""
+        for (key in RigLibrary.stillKeys.sorted()) {
+            val still = RigLibrary.still(key) ?: continue
+            for (cam in listOf(Camera.THREE_QUARTER, Camera.SIDE, Camera.FRONT)) {
+                val frame = Stills.bounds(listOf(key), cam)
+                val b = renderer.bodyBounds(still.scene, still.pose, cam)
+                val room = minOf(b.minX - frame.minX, b.minY - frame.minY, frame.maxX - b.maxX, frame.maxY - b.maxY)
+                if (room < tightest) { tightest = room; where = "$key yaw=${cam.yaw}" }
+            }
+        }
+        println("still framing: tightest ${"%.1f".format(tightest)} cm to spare ($where)")
+        assertTrue("mesh has only $tightest cm to spare in a still ($where)", tightest >= 1f)
+    }
+
+    @Test
+    fun framingIsCheapEvenForTheLongestClip() {
+        val anim = RigLibrary.animation("joint_circles")
+        val t0 = System.nanoTime()
+        MeshFraming.clip(ClipPlayer(anim, emptyList()), anyYaw = true)
+        val ms = (System.nanoTime() - t0) / 1e6
+        println("framing the joint circles took ${"%.0f".format(ms)} ms")
+        assertTrue("framing took $ms ms", ms < 400.0)
     }
 
     @Test

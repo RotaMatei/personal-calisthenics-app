@@ -56,14 +56,20 @@ object MeshAssets {
     }
 }
 
-/** The body mesh, or null while it is still loading or when it is unavailable. */
+/** The body mesh and whether loading it is over, so "no mesh" can mean "still loading" or "unavailable". */
+internal class MeshLoad(val mesh: HumanMesh?, val finished: Boolean)
+
 @Composable
-fun rememberHumanMesh(): HumanMesh? {
+internal fun rememberMeshLoad(): MeshLoad {
     val context = LocalContext.current.applicationContext
-    val mesh by produceState<HumanMesh?>(HumanMesh.shared, context) {
-        if (value == null) value = withContext(Dispatchers.Default) { MeshAssets.load(context) }
+    val initial = HumanMesh.shared
+    val load by produceState(MeshLoad(initial, initial != null), context) {
+        if (!value.finished) {
+            val mesh = withContext(Dispatchers.Default) { MeshAssets.load(context) }
+            value = MeshLoad(mesh, true)
+        }
     }
-    return mesh
+    return load
 }
 
 /** What a live picture draws next: the clip time and the camera. */
@@ -73,6 +79,9 @@ private const val LIVE_MAX_WIDTH = 720f
 private const val LIVE_MAX_PIXELS = 400_000f
 private const val LIVE_MIN_SCALE = 0.4f
 private const val LIVE_SLOW_MS = 45.0
+
+/** Never start a new picture sooner than this after the previous one (about 35 per second, whatever the display rate). */
+private const val LIVE_MIN_INTERVAL_NS = 28_000_000L
 
 /** Three bitmaps in rotation: one is shown, one is being filled, one may still be queued for the screen. */
 private class LiveBuffers(val w: Int, val h: Int) {
@@ -84,46 +93,62 @@ private class LiveBuffers(val w: Int, val h: Int) {
 
 /**
  * A looping clip as a live picture: the mesh is rendered on a background thread for whatever [request] asks for at the
- * start of each display frame, at a size that keeps phones at a comfortable frame rate, and drawn scaled to fill the
- * canvas. [bounds] is the capsule framing of the clip; [pad] is in canvas pixels.
+ * start of a display frame, at a size that keeps phones at a comfortable frame rate, and drawn scaled to fill the
+ * canvas. [bounds] gives the framing of the clip for the mesh (see MeshFraming; it runs off the main thread);
+ * [boundsKey] must change whenever [bounds] would answer differently. [pad] is in canvas pixels.
  */
 @Composable
 internal fun LivePicture(
     player: ClipPlayer,
-    bounds: Bounds,
+    boundsKey: Any,
+    bounds: (ClipPlayer) -> Bounds,
     pad: Float,
     modifier: Modifier = Modifier,
     request: () -> LiveRequest,
 ) {
-    val mesh = rememberHumanMesh()
+    val load = rememberMeshLoad()
+    val mesh = load.mesh
     var broken by remember(player) { mutableStateOf(false) }
-    if (mesh == null || broken) {
+    if (broken || (mesh == null && load.finished)) {
+        // Capsule figure: the mesh is unavailable.
+        val framing = remember(player, boundsKey) { bounds(player) }
         Canvas(modifier) {
             val req = request()
-            drawPrims(player.frame(req.timeMs, camera = req.camera).prims, ViewFit(bounds, size.width, size.height, pad))
+            drawPrims(player.frame(req.timeMs, camera = req.camera).prims, ViewFit(framing, size.width, size.height, pad))
         }
+        return
+    }
+    if (mesh == null) {
+        // Still loading: just the backdrop for a moment.
+        Canvas(modifier) {}
         return
     }
 
     var box by remember { mutableStateOf(IntSize.Zero) }
     var shown by remember(mesh, player) { mutableStateOf<ImageBitmap?>(null) }
     val currentRequest by rememberUpdatedState(request)
+    val currentBounds by rememberUpdatedState(bounds)
 
-    LaunchedEffect(mesh, player, bounds, pad, box) {
+    LaunchedEffect(mesh, player, boundsKey, pad, box) {
         val canvasW = box.width
         val canvasH = box.height
         if (canvasW < 8 || canvasH < 8) return@LaunchedEffect
         val renderer = MeshRenderer(mesh)
-        val framing = MeshFrames.framing(bounds)
+        val measure = currentBounds
+        val framing = withContext(Dispatchers.Default) { measure(player) }
         var scale = min(1f, min(LIVE_MAX_WIDTH / canvasW, sqrt(LIVE_MAX_PIXELS / (canvasW.toFloat() * canvasH))))
         var buffers = LiveBuffers((canvasW * scale).roundToInt().coerceAtLeast(8), (canvasH * scale).roundToInt().coerceAtLeast(8))
         var last: LiveRequest? = null
+        var lastStartNs = 0L
         var averageMs = 0.0
         var frames = 0
         while (true) {
-            val req = withFrameNanos { currentRequest() }
-            if (req == last) continue
+            // Look at the request once per display frame; only draw when it changed and the last picture is old enough.
+            val frame = withFrameNanos { nanos -> if (nanos - lastStartNs < LIVE_MIN_INTERVAL_NS) null else currentRequest() }
+            if (frame == null || frame == last) continue
+            val req: LiveRequest = frame
             last = req
+            lastStartNs = System.nanoTime()
             val target = buffers
             val targetScale = scale
             val started = System.nanoTime()
@@ -145,7 +170,8 @@ internal fun LivePicture(
             shown = target.images[slot]
 
             // Too slow for this phone: render smaller (the picture is scaled up on screen).
-            averageMs = if (frames == 0) (System.nanoTime() - started) / 1e6 else averageMs * 0.85 + (System.nanoTime() - started) / 1e6 * 0.15
+            val tookMs = (System.nanoTime() - started) / 1e6
+            averageMs = if (frames == 0) tookMs else averageMs * 0.85 + tookMs * 0.15
             frames++
             if (frames >= 12 && averageMs > LIVE_SLOW_MS && scale > LIVE_MIN_SCALE) {
                 scale = (scale * 0.8f).coerceAtLeast(LIVE_MIN_SCALE)
@@ -207,7 +233,8 @@ internal fun StaticMeshPicture(
     fallback: DrawScope.() -> Unit,
     draw: (MeshRenderer, ViewMap, IntArray, MeshOptions) -> Boolean,
 ) {
-    val mesh = rememberHumanMesh()
+    val load = rememberMeshLoad()
+    val mesh = load.mesh
     var box by remember { mutableStateOf(IntSize.Zero) }
     var failed by remember(cacheKey) { mutableStateOf(false) }
     val currentDraw by rememberUpdatedState(draw)
@@ -254,7 +281,7 @@ internal fun StaticMeshPicture(
                 dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt()),
                 filterQuality = FilterQuality.Low,
             )
-        } else if (mesh == null || failed) {
+        } else if ((mesh == null && load.finished) || failed) {
             fallback()
         }
         overlay()

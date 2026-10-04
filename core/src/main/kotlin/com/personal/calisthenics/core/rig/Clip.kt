@@ -58,6 +58,10 @@ class ClipPlayer(
     /** Bounds that stay valid while the user drags the camera to any angle around the figure. */
     val boundsAnyYaw: Bounds by lazy { union((orbitYaws() + (0 until 12).map { it * 30f }).map { cam(it) }) }
 
+    /** Cameras this clip is seen from: along the orbit and, with [anyYaw], every angle around the figure. */
+    fun framingCameras(anyYaw: Boolean): List<Camera> =
+        (if (anyYaw) orbitYaws() + (0 until 12).map { it * 30f } else orbitYaws()).map { cam(it) }
+
     private fun orbitYaws(): List<Float> =
         if (orbit.sweepDeg == 0f) listOf(orbit.centerYaw)
         else listOf(-1f, -0.5f, 0f, 0.5f, 1f).map { orbit.centerYaw + it * orbit.sweepDeg }

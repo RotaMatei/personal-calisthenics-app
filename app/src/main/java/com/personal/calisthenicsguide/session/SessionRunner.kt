@@ -55,6 +55,7 @@ class SessionRunner(
     private var tickJob: Job? = null
     private var soundOn = true
     private var vibrationOn = true
+    private var starting = false
 
     init {
         scope.launch {
@@ -69,21 +70,27 @@ class SessionRunner(
 
     /** Starts a session for [options]; the foreground service starts as soon as the session row exists. */
     fun start(options: PlanOptions) {
-        if (_state.value.active) return
+        // `active` only turns true once the session row exists, so a second tap in between must be ignored too.
+        if (_state.value.active || starting) return
+        starting = true
         scope.launch {
-            val plan = SessionPlanner.plan(options)
-            sessionId = repository.startSession(options.day, options.deload, options.coldMode, System.currentTimeMillis())
-            val e = SessionEngine(plan)
-            engine = e
-            e.start(now())
-            ContextCompat.startForegroundService(context, Intent(context, WorkoutService::class.java))
-            publish(active = true, plan = plan)
-            tickJob?.cancel()
-            tickJob = scope.launch {
-                while (isActive) {
-                    tick()
-                    delay(TICK_MS)
+            try {
+                val plan = SessionPlanner.plan(options)
+                sessionId = repository.startSession(options.day, options.deload, options.coldMode, System.currentTimeMillis())
+                val e = SessionEngine(plan)
+                engine = e
+                e.start(now())
+                ContextCompat.startForegroundService(context, Intent(context, WorkoutService::class.java))
+                publish(active = true, plan = plan)
+                tickJob?.cancel()
+                tickJob = scope.launch {
+                    while (isActive) {
+                        tick()
+                        delay(TICK_MS)
+                    }
                 }
+            } finally {
+                starting = false
             }
         }
     }

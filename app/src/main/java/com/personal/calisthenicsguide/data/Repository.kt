@@ -49,6 +49,8 @@ class Repository(private val db: AppDatabase) {
                 shoulders = rating?.shoulders,
             ),
         )
+        // A manually picked day applies to this one session; the next one goes back to the A -> B -> C rotation.
+        db.settings().put(SettingEntity(SettingKeys.DAY_OVERRIDE, ""))
     }
 
     /** Drops a session that was started but never produced a set (for example when the user cancels at once). */

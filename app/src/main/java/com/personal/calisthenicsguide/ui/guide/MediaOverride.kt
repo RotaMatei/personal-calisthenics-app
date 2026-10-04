@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -105,18 +106,21 @@ private fun UserClip(override: MediaOverrideEntity) {
             modifier = Modifier.fillMaxWidth().height(340.dp).clip(shape),
         )
     } else {
-        AndroidView(
-            factory = { ctx ->
-                VideoView(ctx).apply {
-                    setVideoURI(uri)
-                    setOnPreparedListener { player ->
-                        player.isLooping = true
-                        player.setVolume(0f, 0f)
-                        start()
+        // The factory only runs once per view, so a new file needs a new view.
+        key(uri) {
+            AndroidView(
+                factory = { ctx ->
+                    VideoView(ctx).apply {
+                        setVideoURI(uri)
+                        setOnPreparedListener { player ->
+                            player.isLooping = true
+                            player.setVolume(0f, 0f)
+                            start()
+                        }
                     }
-                }
-            },
-            modifier = Modifier.fillMaxWidth().height(340.dp).clip(shape),
-        )
+                },
+                modifier = Modifier.fillMaxWidth().height(340.dp).clip(shape),
+            )
+        }
     }
 }

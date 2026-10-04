@@ -45,9 +45,10 @@ fun StillView(
     height: Dp = 260.dp,
 ) {
     val measurer = rememberTextMeasurer()
-    // Capsule picture and the labels laid over the figure; the labels are drawn on the mesh picture too.
-    val frame = remember(key, camera, highlights) { Stills.render(key, camera, highlights) }
-    if (frame == null) {
+    // The labels are cheap to lay out; the capsule picture is only built if the mesh is unavailable.
+    val labels = remember(key, camera) { Stills.overlay(key, camera) }
+    val capsule = remember(key, camera, highlights) { lazy { Stills.render(key, camera, highlights) } }
+    if (labels == null) {
         Box(modifier.fillMaxWidth().height(height).clip(RoundedCornerShape(14.dp)).background(AppColors.ClipBackdrop))
         return
     }
@@ -62,9 +63,11 @@ fun StillView(
             .background(AppColors.ClipBackdrop),
         overlay = {
             val fit = ViewFit(bounds, size.width, size.height, pad = 6f)
-            for (label in frame.overlay) drawAnnotation(label, fit, measurer, minTextPx = 11.sp.toPx())
+            for (label in labels) drawAnnotation(label, fit, measurer, minTextPx = 11.sp.toPx())
         },
-        fallback = { drawPrims(frame.prims, ViewFit(bounds, size.width, size.height, pad = 6f)) },
+        fallback = {
+            capsule.value?.let { drawPrims(it.prims, ViewFit(bounds, size.width, size.height, pad = 6f)) }
+        },
     ) { renderer, view, out, options ->
         MeshFrames.still(renderer, key, camera, highlights, view, out, options)
     }

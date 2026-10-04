@@ -21,6 +21,12 @@ object Stills {
         return StillFrame(prims, overlay, camera)
     }
 
+    /** Only the labels of the still [key] (cheap), for views that draw the figure some other way; null if there is no such still. */
+    fun overlay(key: String, camera: Camera = Camera.SIDE): List<AnnotationDraw>? {
+        val still = RigLibrary.still(key) ?: return null
+        return Annotations.layout(Annotations.forStill(key), still.pose, camera)
+    }
+
     /**
      * One view rectangle that fits every still in [keys] (body, props and label boxes) from [camera], so a wrong/right
      * pair is drawn at the same scale.

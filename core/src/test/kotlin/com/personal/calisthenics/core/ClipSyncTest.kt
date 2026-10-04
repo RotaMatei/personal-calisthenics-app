@@ -33,6 +33,23 @@ class ClipSyncTest {
     }
 
     @Test
+    fun theStressPulseStillMeasuresFromPositionAAtTempo() {
+        var checked = 0
+        for ((id, tempo) in tempoExercises()) {
+            val base = RigLibrary.animationOrNull(id) ?: continue
+            if (base.keyframes.size != 2 || base.captions.isNotEmpty()) continue
+            val retimed = ClipSync.animationAtTempo(base, tempo)
+            val second = retimed.keyframes[0].holdMs + retimed.keyframes[0].moveMs
+            // Whatever keyframe the retimed clip starts with, Position A reads 0 and Position B reads 1.
+            val (tA, tB) = if (retimed.keyframes[0].pose == base.startPose()) 0L to second else second to 0L
+            assertEquals("$id at Position A", 0f, retimed.progressAt(tA), 1e-3f)
+            assertEquals("$id at Position B", 1f, retimed.progressAt(tB), 1e-3f)
+            checked++
+        }
+        assertTrue("checked the two-pose strength clips ($checked)", checked >= 6)
+    }
+
+    @Test
     fun otherDrillsRunAtTheirOwnSpeed() {
         val jacks = RigLibrary.animation("jumping_jacks")
         assertEquals(1234L, ClipSync.drillTimeMs(jacks, 1234L, 45_000L))
