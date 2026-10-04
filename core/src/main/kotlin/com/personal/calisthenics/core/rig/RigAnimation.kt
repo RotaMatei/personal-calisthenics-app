@@ -72,7 +72,7 @@ object RigFraming {
      * Union bounds of everything the animation draws from [camera] (ground excluded), expanded by a margin, so the
      * figure never leaves the frame while it moves.
      */
-    fun bounds(animation: RigAnimation, camera: Camera, margin: Float = 10f): Bounds {
+    fun bounds(animation: RigAnimation, camera: Camera, margin: Float = 10f, samples: Int = 12): Bounds {
         var minX = Float.MAX_VALUE
         var minY = Float.MAX_VALUE
         var maxX = -Float.MAX_VALUE
@@ -84,8 +84,8 @@ object RigFraming {
             maxY = maxOf(maxY, y + r)
         }
         val options = RenderOptions(xray = false)
-        for (frame in 0..12) {
-            val pose = animation.poseAt(animation.loopMs * frame / 12)
+        for (frame in 0..samples) {
+            val pose = animation.poseAt(animation.loopMs * frame / samples)
             for (prim in RigRenderer.render(animation.scene, pose, camera, emptyList(), options)) {
                 if (prim.material in RigRenderer.groundMaterials) continue
                 when (prim) {
