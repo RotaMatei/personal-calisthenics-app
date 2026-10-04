@@ -75,14 +75,14 @@ milestones marked `(claimed)` unless `git log origin/main -1` is more than 2 hou
       red/yellow/blue, no blobs on joints). (b) Make the figure more realistic:
       better shading and proportions, muscle definition, clothing, face and hair. Limit: it is rendered by our own Canvas
       painter (no 3D engine, no downloadable models in this workspace), so "realistic" means as far as that allows.
-- [ ] M17 (claimed) **UI redesign.** The UI feels cluttered and badly spaced. Redo all four tabs with a consistent spacing scale,
+- [x] M17 **UI redesign** (DONE 2026-10-04: `Space` scale + muted palette in `Theme.kt` (sage accent, slate info, sand warn, dusty rose danger, off-white text, charcoal surfaces, no saturated yellow or blue), shared `AppCard`/`CollapsibleCard`/`PrimaryButton`/`Pill` in `ui/components`; Home = today card, compact recovery and block cards, checklist and sound options collapsed; Guide, Stats, heatmap, charts and DO/DON'T colours restyled; Android path verified by CI only, never seen on a device by me). The UI feels cluttered and badly spaced. Redo all four tabs with a consistent spacing scale,
       fewer simultaneous cards, clearer hierarchy. Use a calmer, less contrasty dark palette: the saturated yellow and blue hurt
       the user's eyes, so use muted tones (soft, desaturated accents) everywhere, including charts and the heatmap.
-- [ ] M18 (claimed) **Workout details page.** Pressing a workout must NOT start it. It opens a details page that lists every
+- [x] M18 **Workout details page** (DONE 2026-10-04: `WorkoutDetailsScreen`; the Workout tab shows it while no session runs and Home's button only opens it; rows come from the pure `WorkoutOutline` (sets x reps or seconds, rest in minutes, cold-mode cap, deload note); the thumbnail is position A of the clip, tapping opens the looping 3D clip with reps, cue and description under it; Start button at the bottom; day chips and the cold-weather switch moved here). Pressing a workout must NOT start it. It opens a details page that lists every
       exercise with the exact number of sets and reps (or hold seconds) and the rest in minutes. Each row shows the picture of
       the correct position; pressing it extends a drawer-like panel that shows the looping 3D video instead, with the reps
       and the description under it. The Start button lives on this page.
-- [ ] M19 (claimed) **Rep-exercise player screen.** For every exercise counted in reps (no duration), the whole screen shows the
+- [x] M19 **Rep-exercise player screen** (DONE 2026-10-04: `RepPlayerMode` is the clip edge to edge with set/rep/phase overlays and a Next button; the nav bar hides during it; `ClipSync.animationAtTempo` retimes the two-pose clip to the real tempo (lower, pause, drive, squeeze, top = higher body) and `tempoTimeMs` starts it with the first beep; Next ends the set with the rep count suggested from the metronome position; warm-up and stretch drills now show their clip too, driven from drill time so the joint circles match the five sub-labels; tests `ClipSyncTest`, `WorkoutOutlineTest`, engine tests). For every exercise counted in reps (no duration), the whole screen shows the
       3D video and a Next button sits at the bottom. USER DECISIONS (2026-10-04): this applies to strength sets (Phase 2)
       only; warm-up/decompression drills keep their timers and 10 s transitions. Tempo beeps and vibration KEEP running on
       this screen (the clip loops at the set's tempo), Next ends the set and leads to a one-tap pre-filled reps/RIR log, then rest.
