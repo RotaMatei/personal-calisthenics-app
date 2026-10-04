@@ -111,7 +111,23 @@ milestones marked `(claimed)` unless `git log origin/main -1` is more than 2 hou
       Status 2026-10-04: built (`tools/mesh/`, `core/.../mesh/`, `human.bin`, `HumanMeshTest`, app views in `MeshViews.kt` with the
       capsule figure as automatic fallback, credit in `docs/ASSETS.md`); CI green (run 37188843936, which also checks that the APK
       contains `assets/human.bin`). Not seen on a device by me.
-- [ ] M21 Re-audit against these requirements and `docs/SPEC.md`, update tests and README, CI green, new debug APK artifact.
+- [x] M21 **Re-audit against these requirements and `docs/SPEC.md`** (DONE 2026-10-04; CI run 37190691594 green: core tests,
+      debug APK build, APK-contains-`assets/human.bin` check, artifact `calisthenics-debug-apk` uploaded; 139/139 core tests).
+      An independent reviewer audited every round-2 item; each reported defect was reproduced before it was fixed.
+      Fixed: (1) the mesh could leave the picture (up to 23 cm in the 30 s joint circles) because the capsule framing sampled
+      13 times of a long loop: `MeshFraming` frames from the solved skeleton at every keyframe/move, 25 ms for the longest clip,
+      tests render the mesh for all exercises x cameras x dragged yaws, thumbnails and DO/DON'T stills (>= 2.6 cm to spare);
+      (2) crotch "web" in deep squats: skin weights smoothed in the converter, stretch test (< 0.3 % of edges stretched > 3x);
+      (3) the stress pulse ran backwards at non-default tempo: the retimed clip keeps the base clip's start/end pose as the
+      progress reference (`ClipSyncTest`); (4) a day override that stayed stuck, double start of a session, no confirmation on
+      End, MP4 override replacement; (5) frame cost: rendering and framing off the main thread, ~35 fps cap, adaptive
+      resolution, three-bitmap ring, cached stills, one shared still renderer; no flash of the capsule figure while the mesh
+      loads; (6) the capsule fallback and the DO/DON'T art use the muted palette too. README tabs section rewritten.
+      Known limits (not done, reported to the user): grip-specific hand orientation (chin-up/neutral grip show the overhand
+      clip), the hand-on-bar close-ups (`DetailView`) are still capsule art, a few screens (Guide, ProgressionMatrix,
+      MediaOverride, StillViews) use raw dp instead of the `Space` scale, thumb on gripped hands sticks out slightly,
+      x-ray of hidden highlight patches is not available on the mesh (orbit reveals them), the 0.4 MB mesh ships twice in
+      the APK (assets and class-path resources). The Android layer is verified only through CI, never on a device by me.
 
 ## Auto-resume
 - Scheduled task "Calisthenics app auto-resume" (trig_01NAmLe2tPTDAtFJZ7zbnBqD) starts a fresh session hourly at :48 and

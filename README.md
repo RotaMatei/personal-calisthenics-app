@@ -6,11 +6,16 @@ Stress-colouring rationale per exercise: [`docs/STRESS_MAP.md`](docs/STRESS_MAP.
 
 ## Tabs
 
-- **Home**: tendon recovery clock (48-72 h window), A/B/C day rotation, 6-week deload tracker, pre-workout checklist,
-  cold-weather superset toggle, beep/vibration settings, start button.
-- **Workout**: warm-up flow (10 s transitions), isometric holds with a 5 s get-ready buffer, tempo metronome, smart rest
-  timer that starts when a set is logged, reps/RIR logging, joint rating at the end. Runs in a foreground service with a
-  wake lock; the screen stays on during a session.
+- **Home**: today's workout card, tendon recovery clock (48-72 h window), A/B/C day rotation, 6-week deload tracker;
+  pre-workout checklist and beep/vibration settings are collapsed until you open them.
+- **Workout**: pressing a workout opens a details page first: every exercise with its exact sets x reps (or hold
+  seconds) and the rest in minutes, the picture of position A on each row, and a drawer on tap that plays the looping 3D
+  clip with the reps and description under it. Day choice and the cold-weather superset switch live there, and so does
+  the Start button. During a session: warm-up flow (10 s transitions), isometric holds with a 5 s get-ready buffer,
+  smart rest timer that starts when a set is logged, reps/RIR logging, joint rating at the end. Strength sets counted in
+  reps show the 3D clip full screen at the set's tempo (beeps and vibration keep running) with a Next button that ends
+  the set and leads to a one-tap, pre-filled reps/RIR log. Runs in a foreground service with a wake lock; the screen
+  stays on during a session.
 - **Guide**: every exercise with a looping clip of a real 3D human mesh (orbit, side, front) tinted with soft
   stress-matched muscle/tendon/joint hues, optional own GIF/MP4, labelled DO/DON'T pictures, and the 4-stage progression matrix.
 - **Stats**: consistency heatmap and streak, tendon safety guard (pull volume +15% warning), strength charts, joint log.
