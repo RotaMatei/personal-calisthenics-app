@@ -94,6 +94,20 @@ milestones marked `(claimed)` unless `git log origin/main -1` is more than 2 hou
   strict_pullups 7.1 cm, joint_circles 11.7 cm, jumping_jacks 7.5 cm, banded_dislocates 3.1 cm). (2) joint_circles is a
   single arm-swing loop; the Pose model has no neck roll/turn, hip circle or ankle circle, so those must be added and the
   clip sequenced through all five rotations (neck half circles, shoulders, elbows, hips, ankles) with a caption.
+- [ ] M22 (claimed) **Real 3D human figure (added 2026-10-04 10:26, BINDING, supersedes the capsule-built body of M5d/M16).**
+      The user: "please use real 3D assets of humans. They don't have to be coloured even, just detailed." Replace the
+      procedurally built figure with a real, detailed human mesh. Asset: the MakeHuman base mesh with its default skeleton and
+      skin weights (CC0 per `LICENSE.ASSETS.md` of github.com/makehumancommunity/makehuman, sparse clone of
+      `makehuman/data/3dobjs/base.obj`, `makehuman/data/rigs/default.mhskel`, `default_weights.mhw`; the workspace cannot reach
+      raw.githubusercontent.com, only normal git clones from github.com). Plan: (1) offline Python tool in `tools/mesh/` that
+      keeps the skin ("body") group, triangulates, decimates to a phone-friendly size, collapses the MakeHuman bone weights onto
+      our ~16 rig segments and writes one compact binary under `core/src/main/resources/`; (2) `:core` loads it, skins it with
+      the `Skeleton` that `RigSolver` already solves (so every existing animation, pole vector, bar and prop keeps working),
+      and shades it as plain matte clay/marble (colour is not needed, detail is); (3) a CPU z-buffer rasteriser in `:core`
+      draws mesh + props into one image that Compose and the preview tool both show, so occlusion is correct; (4) tension is
+      still the soft muted hue wash, now projected over the mesh regions; (5) tests: mesh loads, weights sum to 1, posed mesh
+      stays attached to the skeleton, no stretched triangles in the 20 exercise poses; preview renders checked by eye;
+      (6) credit the asset in the README. Keep `RigRenderer` (capsule figure) as a fallback until the mesh path is verified.
 - [ ] M21 Re-audit against these requirements and `docs/SPEC.md`, update tests and README, CI green, new debug APK artifact.
 
 ## Auto-resume

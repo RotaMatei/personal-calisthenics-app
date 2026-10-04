@@ -107,7 +107,7 @@ private fun SectionCard(title: String, subtitle: String? = null, content: @Compo
 private fun RecoveryCard(state: DashboardState) {
     val r = state.recovery
     val color = when (r.state) {
-        RecoveryState.NO_HISTORY -> AppColors.Cyan
+        RecoveryState.NO_HISTORY -> AppColors.Info
         RecoveryState.TOO_SOON -> AppColors.Warn
         RecoveryState.OPTIMAL_WINDOW -> AppColors.Good
         RecoveryState.OVERDUE -> AppColors.Danger
@@ -159,7 +159,7 @@ private fun NextSessionCard(state: DashboardState, onColdMode: (Boolean) -> Unit
             "Usually ${state.day.nominalWeekday.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.ENGLISH)}s. ${state.day.focus}",
             style = MaterialTheme.typography.bodyLarge,
         )
-        Text("Pull-up grip: ${state.grip.displayName}", color = AppColors.Cyan, style = MaterialTheme.typography.bodyLarge)
+        Text("Pull-up grip: ${state.grip.displayName}", color = AppColors.Info, style = MaterialTheme.typography.bodyLarge)
         val range = state.estimateMinutes
         Text(
             "About ${range.first}-${range.last} min, ${state.totalSets} sets. The range depends on how long you rest.",
@@ -211,10 +211,10 @@ private fun DeloadCard(state: DashboardState) {
                 val current = week == state.weekInBlock
                 val deloadWeek = week == total
                 val fill = when {
-                    current && deloadWeek -> AppColors.Cyan
+                    current && deloadWeek -> AppColors.Info
                     current -> AppColors.Accent
                     done -> AppColors.Good.copy(alpha = 0.6f)
-                    deloadWeek -> AppColors.Cyan.copy(alpha = 0.25f)
+                    deloadWeek -> AppColors.Info.copy(alpha = 0.25f)
                     else -> AppColors.SurfaceHigh
                 }
                 Canvas(Modifier.weight(1f).height(16.dp)) {
@@ -226,7 +226,7 @@ private fun DeloadCard(state: DashboardState) {
             if (state.isDeload) "Deload week: total sets are halved. Keep every rep clean and let the tendons catch up."
             else "Week ${state.weekInBlock} of $total  -  deload starts in ${state.weeksUntilDeload} week${if (state.weeksUntilDeload == 1) "" else "s"}",
             style = MaterialTheme.typography.bodyLarge,
-            color = if (state.isDeload) AppColors.Cyan else AppColors.TextPrimary,
+            color = if (state.isDeload) AppColors.Info else AppColors.TextPrimary,
         )
     }
 }

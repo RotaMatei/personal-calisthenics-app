@@ -225,7 +225,7 @@ private fun HighlightLegend(highlights: List<Highlight>) {
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                     )
-                    Text(peakLabel(h.peak), style = MaterialTheme.typography.bodyMedium, color = AppColors.Cyan)
+                    Text(peakLabel(h.peak), style = MaterialTheme.typography.bodyMedium, color = AppColors.Info)
                     if (h.note.isNotBlank()) Text(h.note, style = MaterialTheme.typography.bodyMedium, color = AppColors.TextSecondary)
                 }
             }

@@ -217,7 +217,7 @@ private fun FlowContent(snapshot: EngineSnapshot) {
     PacingBar(timer.phaseProgress, if (transition) AppColors.Warn else AppColors.Good)
     val subIndex = timer.subLabelIndex
     if (!transition && phase.subLabels.isNotEmpty() && subIndex != null) {
-        Text(phase.subLabels[subIndex], style = MaterialTheme.typography.titleLarge, color = AppColors.Cyan)
+        Text(phase.subLabels[subIndex], style = MaterialTheme.typography.titleLarge, color = AppColors.Info)
     }
     drill?.let {
         InfoCard {
@@ -242,7 +242,7 @@ private fun targetText(item: WorkItem): String = when (item.kind) {
 @Composable
 private fun ReadyContent(snapshot: EngineSnapshot) {
     val item = snapshot.item ?: return
-    Text("Up next", color = AppColors.Cyan, style = MaterialTheme.typography.titleMedium)
+    Text("Up next", color = AppColors.Info, style = MaterialTheme.typography.titleMedium)
     Text(item.title, style = MaterialTheme.typography.headlineMedium)
     Text(
         "Set ${item.setNumber} of ${item.totalSets}" + (item.side?.let { " - ${it.label}" } ?: ""),
@@ -298,7 +298,7 @@ private fun ActiveContent(snapshot: EngineSnapshot) {
 @Composable
 private fun LogContent(snapshot: EngineSnapshot, progression: Map<String, ProgressionState>) {
     val item = snapshot.item ?: return
-    Text("Log your set", color = AppColors.Cyan, style = MaterialTheme.typography.titleMedium)
+    Text("Log your set", color = AppColors.Info, style = MaterialTheme.typography.titleMedium)
     Text(item.title, style = MaterialTheme.typography.headlineMedium)
     Text(
         "Set ${item.setNumber} of ${item.totalSets}" + (item.side?.let { " - ${it.label}" } ?: ""),
@@ -319,9 +319,9 @@ private fun progressionLevel(item: WorkItem, progression: Map<String, Progressio
 @Composable
 private fun RestContent(snapshot: EngineSnapshot) {
     val timer = snapshot.timer ?: return
-    Text("Rest", style = MaterialTheme.typography.headlineMedium, color = AppColors.Cyan)
-    BigCountdown(timer.phaseRemainingSeconds, AppColors.Cyan)
-    PacingBar(1f - timer.phaseProgress, AppColors.Cyan)
+    Text("Rest", style = MaterialTheme.typography.headlineMedium, color = AppColors.Info)
+    BigCountdown(timer.phaseRemainingSeconds, AppColors.Info)
+    PacingBar(1f - timer.phaseProgress, AppColors.Info)
     snapshot.item?.let {
         InfoCard {
             Text("Next: ${it.title}", style = MaterialTheme.typography.titleMedium)
@@ -495,10 +495,10 @@ private fun SecondaryButton(text: String, onClick: () -> Unit, modifier: Modifie
 private fun phaseColor(kind: PhaseKind): Color = when (kind) {
     PhaseKind.GET_READY, PhaseKind.TRANSITION -> AppColors.Warn
     PhaseKind.HOLD -> AppColors.Good
-    PhaseKind.LOWER -> AppColors.Cyan
+    PhaseKind.LOWER -> AppColors.Info
     PhaseKind.PAUSE_BOTTOM, PhaseKind.PAUSE_TOP -> AppColors.Joint
     PhaseKind.DRIVE -> AppColors.Accent
-    PhaseKind.REST -> AppColors.Cyan
+    PhaseKind.REST -> AppColors.Info
     PhaseKind.DRILL -> AppColors.Good
 }
 

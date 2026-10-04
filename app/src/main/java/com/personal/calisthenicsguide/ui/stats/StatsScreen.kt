@@ -180,7 +180,7 @@ private fun HeatmapCard(sessionDays: Map<LocalDate, WorkoutDay>, blockStart: Loc
                                 }
                                 val worked = cell.kind == CellKind.WORKOUT_A || cell.kind == CellKind.WORKOUT_B || cell.kind == CellKind.WORKOUT_C
                                 var mod = Modifier.fillMaxSize().background(fill, RoundedCornerShape(8.dp))
-                                if (cell.deloadWeek) mod = mod.border(1.5.dp, AppColors.Cyan.copy(alpha = 0.7f), RoundedCornerShape(8.dp))
+                                if (cell.deloadWeek) mod = mod.border(1.5.dp, AppColors.Info.copy(alpha = 0.7f), RoundedCornerShape(8.dp))
                                 if (cell.isToday) mod = mod.border(2.5.dp, Color.White, RoundedCornerShape(8.dp))
                                 Box(mod, contentAlignment = Alignment.Center) {
                                     Text(
@@ -198,7 +198,7 @@ private fun HeatmapCard(sessionDays: Map<LocalDate, WorkoutDay>, blockStart: Loc
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
                 Legend(DayA, "Day A"); Legend(DayB, "Day B"); Legend(DayC, "Day C"); Legend(AppColors.SurfaceHigh, "Rest")
             }
-            Text("Cyan outline = deload week", style = MaterialTheme.typography.bodyMedium, color = AppColors.Cyan)
+            Text("Cyan outline = deload week", style = MaterialTheme.typography.bodyMedium, color = AppColors.Info)
             Text(
                 "${data.workoutCount} workout${if (data.workoutCount == 1) "" else "s"} this month  |  $total total  |  " +
                     "$streak-week streak (3 sessions per week)",
