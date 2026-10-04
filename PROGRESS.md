@@ -94,7 +94,7 @@ milestones marked `(claimed)` unless `git log origin/main -1` is more than 2 hou
   strict_pullups 7.1 cm, joint_circles 11.7 cm, jumping_jacks 7.5 cm, banded_dislocates 3.1 cm). (2) joint_circles is a
   single arm-swing loop; the Pose model has no neck roll/turn, hip circle or ankle circle, so those must be added and the
   clip sequenced through all five rotations (neck half circles, shoulders, elbows, hips, ankles) with a caption.
-- [ ] M22 (claimed) **Real 3D human figure (added 2026-10-04 10:26, BINDING, supersedes the capsule-built body of M5d/M16).**
+- [x] M22 **Real 3D human figure (added 2026-10-04 10:26, BINDING, supersedes the capsule-built body of M5d/M16).**
       The user: "please use real 3D assets of humans. They don't have to be coloured even, just detailed." Replace the
       procedurally built figure with a real, detailed human mesh. Asset: the MakeHuman base mesh with its default skeleton and
       skin weights (CC0 per `LICENSE.ASSETS.md` of github.com/makehumancommunity/makehuman, sparse clone of
@@ -109,7 +109,8 @@ milestones marked `(claimed)` unless `git log origin/main -1` is more than 2 hou
       stays attached to the skeleton, no stretched triangles in the 20 exercise poses; preview renders checked by eye;
       (6) credit the asset in the README. Keep `RigRenderer` (capsule figure) as a fallback until the mesh path is verified.
       Status 2026-10-04: built (`tools/mesh/`, `core/.../mesh/`, `human.bin`, `HumanMeshTest`, app views in `MeshViews.kt` with the
-      capsule figure as automatic fallback, credit in `docs/ASSETS.md`); waiting for the CI compile of the Android layer.
+      capsule figure as automatic fallback, credit in `docs/ASSETS.md`); CI green (run 37188843936, which also checks that the APK
+      contains `assets/human.bin`). Not seen on a device by me.
 - [ ] M21 Re-audit against these requirements and `docs/SPEC.md`, update tests and README, CI green, new debug APK artifact.
 
 ## Auto-resume

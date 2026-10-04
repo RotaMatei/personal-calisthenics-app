@@ -129,6 +129,48 @@ class HumanMeshTest {
     }
 
     @Test
+    fun skinningDoesNotTearOrCollapseTheBodyInAnyExercisePose() {
+        val renderer = MeshRenderer(mesh)
+        val tris = mesh.triangles
+        val rest = mesh.rest
+        fun len(p: FloatArray, a: Int, b: Int): Float {
+            val dx = p[a * 3] - p[b * 3]
+            val dy = p[a * 3 + 1] - p[b * 3 + 1]
+            val dz = p[a * 3 + 2] - p[b * 3 + 2]
+            return kotlin.math.sqrt(dx * dx + dy * dy + dz * dz)
+        }
+        var worstShare = 0f
+        var worstShareId = ""
+        var worstStretch = 0f
+        for (id in RigLibrary.animationIds.sorted()) {
+            val anim = RigLibrary.animation(id)
+            for (f in 0..4) {
+                val p = renderer.skinnedPositions(anim.scene, anim.poseAt(anim.loopMs * f / 4))
+                var edges = 0
+                var bad = 0
+                for (i in 0 until mesh.triangleCount) {
+                    for (e in 0 until 3) {
+                        val a = tris[i * 3 + e]
+                        val b = tris[i * 3 + (e + 1) % 3]
+                        val r = len(rest, a, b)
+                        if (r < 0.15f) continue // skip degenerate rest edges
+                        val ratio = len(p, a, b) / r
+                        assertTrue("$id: finite", ratio.isFinite())
+                        edges++
+                        if (ratio > 3f || ratio < 0.25f) bad++
+                        worstStretch = maxOf(worstStretch, ratio)
+                    }
+                }
+                val share = bad.toFloat() / edges
+                if (share > worstShare) { worstShare = share; worstShareId = "$id f=$f" }
+            }
+        }
+        println("edges stretched >3x or squashed <0.25x: at most ${"%.2f".format(worstShare * 100)}% of a pose ($worstShareId), longest stretch ${"%.1f".format(worstStretch)}x")
+        // Linear-blend skinning always folds a little in the joint creases (fingers, armpits, groin); a tear shows up as many bad edges.
+        assertTrue("too many torn or collapsed edges: ${worstShare * 100}% ($worstShareId)", worstShare < 0.006f)
+    }
+
+    @Test
     fun aStandingFigureHasTheRigsHeight() {
         val renderer = MeshRenderer(mesh)
         val anim = RigLibrary.animation("strict_pullups")

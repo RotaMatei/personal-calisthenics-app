@@ -7,7 +7,7 @@ Source: MakeHuman 1.x base mesh and targets (CC0), https://github.com/makehumanc
 What this does
   1. applies the macro targets for a lean, muscular young male (plus a few muscle targets) to the base mesh;
   2. keeps the "body" group (the skin, no helper geometry), triangulated, in centimetres, feet on y = 0;
-  3. collapses MakeHuman's 139 weighted bones onto the ~60 segments our rig can pose (torso, neck, head, clavicle,
+  3. collapses MakeHuman's 139 weighted bones onto the 50 skin bones our rig can pose (torso, neck, head, clavicle,
      arm, forearm + twist, hand, 15 finger phalanges, thigh, shin, foot, per side);
   4. exports rest-pose landmarks (joint positions, palm normal, ...) from which the Kotlin side builds rest frames.
 
@@ -25,6 +25,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from makehuman_body import Joints, load_body  # noqa: E402
 
 TARGET_HEIGHT_CM = 177.0
+GROIN_ITERATIONS = 8
+GROIN_ALPHA = 0.6
 
 # Extra muscle targets on top of the macro "male, muscular, lean" look: name -> weight.
 EXTRA_TARGETS = {
@@ -99,6 +101,31 @@ def collapse_weights(weights_json, n_verts):
                 continue
             for name, share in targets:
                 dense[v, BONE_INDEX[name]] += w * share
+    return dense
+
+
+def smooth_weights(dense, quads, mask, iterations, alpha):
+    """Blurs the skin weights of the vertices in [mask] over the mesh surface (neighbours outside the mask stay fixed).
+
+    Used around the pelvis: the base weights switch from "pelvis" to "thigh" within a few millimetres, so a deep or wide
+    squat pulls that strip into a long web. A wider transition spreads the stretch over the whole groin."""
+    n = dense.shape[0]
+    pairs = set()
+    for q in quads:
+        for i in range(len(q)):
+            a, b = int(q[i]), int(q[(i + 1) % len(q)])
+            pairs.add((a, b))
+            pairs.add((b, a))
+    nb = [[] for _ in range(n)]
+    for a, b in pairs:
+        nb[a].append(b)
+    idx = np.where(mask)[0]
+    for _ in range(iterations):
+        new = dense.copy()
+        for v in idx:
+            if nb[v]:
+                new[v] = (1 - alpha) * dense[v] + alpha * dense[nb[v]].mean(axis=0)
+        dense = new
     return dense
 
 
@@ -186,6 +213,11 @@ def main():
     V = V + shift
     J = Joints(V, skel)
     body = V[:n_verts]
+
+    # Pelvis / groin: spread the pelvis-to-thigh weight transition (see smooth_weights).
+    groin = (np.abs(body[:, 0]) < 22.0) & (body[:, 1] > 70.0) & (body[:, 1] < 102.0)
+    print(f"smoothing skin weights of {int(groin.sum())} groin vertices")
+    dense = smooth_weights(dense, quads, groin, iterations=GROIN_ITERATIONS, alpha=GROIN_ALPHA)
 
     lm = landmarks(body, J, dense)
     for k in ("hipC", "shoulderC", "headPivot", "headTop", "chin", "headC", "shoulderP", "elbowP", "wristP", "knuckleP",

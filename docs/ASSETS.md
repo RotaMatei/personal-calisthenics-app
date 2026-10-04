@@ -12,9 +12,9 @@ The 3D figure in the clips and pictures is a real, detailed human mesh, not geom
   `targets/torso/*` and `targets/armslegs/*` muscle targets (the lean, muscular male shape), and
   `makehuman/data/rigs/default.mhskel` plus `default_weights.mhw` (skeleton and skin weights).
 - **What this project did with them:** `tools/mesh/build_human.py` applies the targets, scales the body to 177 cm, collapses
-  the 139 MakeHuman bones onto the ~60 segments of this app's rig (torso, neck, head, clavicles, arms with forearm twist,
+  the 139 MakeHuman bones onto the 50 skin bones of this app's rig (torso, neck, head, clavicles, arms with forearm twist,
   hands, 15 finger bones per hand, legs, feet) and writes one compact binary,
-  `core/src/main/resources/mesh/human.bin` (about 430 KB, ~19,000 vertices). The app opens it as the asset `human.bin`.
+  `core/src/main/resources/mesh/human.bin` (about 420 KB, 13,380 vertices, 26,756 triangles). The app opens it as the asset `human.bin`.
 - **How it is drawn:** `core/.../mesh/` skins the mesh with the pose the rig solves for every frame (so every exercise, bar
   and prop keeps working), shades it as uncoloured clay and tints it with the soft muscle / tendon / joint hues. If the
   mesh cannot be loaded the app falls back to the older capsule figure.

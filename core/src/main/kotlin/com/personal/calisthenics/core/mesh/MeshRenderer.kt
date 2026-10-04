@@ -96,6 +96,13 @@ class MeshRenderer(private val mesh: HumanMesh) {
         lap(5)
     }
 
+    /** Copy of the posed vertex positions (x, y, z per vertex, cm) for [pose]; used by the stretch tests. */
+    fun skinnedPositions(scene: RigScene, pose: Pose): FloatArray {
+        val sk = RigSolver.solve(pose)
+        skin(rig.bones(pose, sk, scene))
+        return pos.copyOf()
+    }
+
     /** Rectangle (view cm, y up) that the posed body mesh covers from [camera]; used to check that clips are framed. */
     fun bodyBounds(scene: RigScene, pose: Pose, camera: Camera): Bounds {
         val sk = RigSolver.solve(pose)
