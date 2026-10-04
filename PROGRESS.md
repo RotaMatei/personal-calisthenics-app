@@ -68,7 +68,7 @@ milestones marked `(claimed)` unless `git log origin/main -1` is more than 2 hou
       and B, and add a test that fails when a bending-elbow exercise has no elbow flexion. (b) Warm-up/drill clips that cover
       several rotations (joint circles: neck, shoulders, elbows, wrists, ...) currently show only one of them. The clip must
       play every rotation in turn, with the current joint named on screen.
-- [ ] M16 (claimed) **Visual quality of the 3D figure.** (a) Targeted joints and muscles must NOT be painted as yellow or red
+- [x] M16 **Visual quality of the 3D figure** (DONE 2026-10-04: tension is now `WashPrim` soft rose/teal/sand gradients clipped to the body part outline, no blobs, far-side tension shown as a faint see-through wash; form shading = per-primitive light/shadow gradients (`Shading`), torso shaded as one volume; new face, hair, muscle-definition washes (`Anatomy`), tapered limbs; `FigureLookTest`; Compose `RigDrawing` + preview tool implement it, Android path verified by CI only). (a) Targeted joints and muscles must NOT be painted as yellow or red
       blobs. Show the tension as a soft hue wash over the model's body surface instead (graded intensity, still pulsing with
       the movement phase, still matched to the real stress of that exact exercise per M5c). USER DECISION (2026-10-04): three
       muted hues as a gentle wash over the body, soft rose = muscle, soft teal = tendon, soft sand = joint (no saturated

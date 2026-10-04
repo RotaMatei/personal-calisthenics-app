@@ -1,5 +1,6 @@
 package com.personal.calisthenics.core.rig
 
+import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.max
 import kotlin.math.min
@@ -23,6 +24,8 @@ data class Part3(
     val shine: Boolean = true,
     val bias: Float = 0f,
     val alpha: Float = 1f,
+    /** Skip the part's own gradient: the whole group is shaded together (see [Group3.spine]). */
+    val flat: Boolean = false,
 )
 
 /**
@@ -38,7 +41,20 @@ class Group3(
     val rel: Float = 0.002f,
     val depthCue: Boolean = true,
     val outlineScale: Float = 1f,
+    /**
+     * For a thick body part built from many overlapping pieces (the torso): the two ends of its spine and its half
+     * width. Its pieces are drawn flat and one soft light/shadow gradient is laid over the whole silhouette instead,
+     * so the pieces do not show as stripes.
+     */
+    val spine: Triple<Vec3, Vec3, Float>? = null,
 )
+
+/**
+ * A soft hue tint over the body part [host] (a [Group3] id), made of gradient [spots] clipped to that part's outline.
+ * [alpha] is the peak opacity; with [onTop] it is drawn over everything instead of right after its host (a faint
+ * see-through hint for tension on the far side of the body).
+ */
+class Wash3(val host: String, val spots: List<Shape3>, val material: Material, val alpha: Float, val onTop: Boolean = false)
 
 data class RenderOptions(
     /** Thickness of the dark rim around every group, in cm. */
@@ -49,6 +65,8 @@ data class RenderOptions(
     /** Draw faint "x-ray" copies of anatomy highlights that sit behind other body parts. */
     val xray: Boolean = true,
     val shadows: Boolean = true,
+    /** Paint the subtle muscle-definition shading (pec edges, abs, muscle bellies). */
+    val definition: Boolean = true,
 )
 
 /** Sorts groups back to front and turns their 3D shapes into 2D primitives for [camera]. */
@@ -57,6 +75,10 @@ internal class Painter(private val cam: Camera, private val opts: RenderOptions)
     private class Entry(val k1: Float, val k2: Float, val prim: Prim)
 
     private val entries = mutableListOf<Entry>()
+    private val hostFills = HashMap<String, MutableList<Prim>>()
+    private val hostKeys = HashMap<String, Float>()
+    private var topKey = 0f
+
     companion object {
         /** Pseudo group id: draw in front of everything else. */
         const val TOP = "@top"
@@ -88,6 +110,7 @@ internal class Painter(private val cam: Camera, private val opts: RenderOptions)
             keys[g.id] = g.parts.map { nearOf(it.shape) }.average().toFloat()
         }
         val maxKey = keys.values.maxOrNull() ?: 0f
+        topKey = maxOf(topKey, maxKey)
         var lo = Float.MAX_VALUE
         var hi = -Float.MAX_VALUE
         for (g in groups) {
@@ -109,7 +132,90 @@ internal class Painter(private val cam: Camera, private val opts: RenderOptions)
             } else {
                 1f
             }
+            hostKeys[g.id] = key
             emit(g, key, tone)
+            g.spine?.let { volumeShading(g, key, it) }
+        }
+    }
+
+    /** One soft shadow wash on the side away from the light and one light wash on the lit side, along the spine. */
+    private fun volumeShading(g: Group3, key: Float, spine: Triple<Vec3, Vec3, Float>) {
+        val fills = hostFills[g.id] ?: return
+        val clip = fills.flatMap { Shading.polygons(it) }
+        if (clip.isEmpty()) return
+        val pa = cam.project(spine.first)
+        val pb = cam.project(spine.second)
+        val dx = pb.x - pa.x
+        val dy = pb.y - pa.y
+        val len = sqrt(dx * dx + dy * dy)
+        // Unit vector across the body that points toward the light.
+        var nx: Float
+        var ny: Float
+        if (len < 1e-3f) {
+            nx = lx; ny = ly
+        } else {
+            nx = -dy / len; ny = dx / len
+            if (nx * lx + ny * ly < 0f) { nx = -nx; ny = -ny }
+        }
+        val across = abs(nx * lx + ny * ly).coerceIn(0.25f, 1f)
+        val w = spine.third
+        val n = 7
+        fun discs(side: Float, offset: Float, radius: Float, weight: Float) = (0 until n).map { i ->
+            val t = i / (n - 1).toFloat()
+            val scale = lerp(pa.scale, pb.scale, t)
+            val cx = lerp(pa.x, pb.x, t) + nx * side * offset * w * scale
+            val cy = lerp(pa.y, pb.y, t) + ny * side * offset * w * scale
+            WashDisc(Vec2(cx, cy), radius * w * scale, weight)
+        }
+        entries += Entry(key + 0.0005f, 1e7f, WashPrim(clip, discs(-1f, 0.70f, 1.05f, 0.55f), Material.SHADOW, 0.46f * across, depth = key))
+        entries += Entry(key + 0.0006f, 1e7f, WashPrim(clip, discs(1f, 0.62f, 0.78f, 0.55f), Material.GUIDE, 0.17f * across, depth = key))
+    }
+
+    /** Adds washes after [add]: each is clipped to the outline of its host group and drawn right after it. */
+    fun addWashes(washes: List<Wash3>) {
+        for (w in washes) {
+            val fills = hostFills[w.host] ?: continue
+            val hostKey = hostKeys[w.host] ?: continue
+            val discs = w.spots.flatMap { discsOf(it) }
+            if (discs.isEmpty()) continue
+            val clip = fills.filter { overlapsAny(it, discs) }.flatMap { Shading.polygons(it) }
+            if (clip.isEmpty()) continue
+            val key = if (w.onTop) topKey + 1f else hostKey + 0.003f
+            entries += Entry(key, 1e7f, WashPrim(clip, discs, w.material, w.alpha, depth = key))
+        }
+    }
+
+    private fun overlapsAny(p: Prim, discs: List<WashDisc>): Boolean {
+        val polys = Shading.polygons(p)
+        if (polys.isEmpty()) return false
+        var minX = Float.MAX_VALUE
+        var minY = Float.MAX_VALUE
+        var maxX = -Float.MAX_VALUE
+        var maxY = -Float.MAX_VALUE
+        for (poly in polys) for (v in poly) {
+            minX = min(minX, v.x); minY = min(minY, v.y)
+            maxX = max(maxX, v.x); maxY = max(maxY, v.y)
+        }
+        return discs.any { it.c.x + it.r >= minX && it.c.x - it.r <= maxX && it.c.y + it.r >= minY && it.c.y - it.r <= maxY }
+    }
+
+    /** Gradient discs for a 3D spot: one for a ball, a chain along the axis for a tube (soft elongated band). */
+    private fun discsOf(spot: Shape3): List<WashDisc> = when (spot) {
+        is Sphere3 -> cam.project(spot.c).let { listOf(WashDisc(Vec2(it.x, it.y), spot.r * it.scale)) }
+        is Ellip3 -> {
+            val r = (spot.ax.length() + spot.ay.length() + spot.az.length()) / 3f
+            cam.project(spot.c).let { listOf(WashDisc(Vec2(it.x, it.y), r * it.scale)) }
+        }
+        is Tube3 -> {
+            val len = (spot.b - spot.a).length()
+            val r = (spot.ra + spot.rb) / 2f
+            val n = max(2, kotlin.math.ceil(len / (r * 0.6f)).toInt() + 1)
+            val weight = 0.55f
+            (0 until n).map { i ->
+                val t = i / (n - 1).toFloat()
+                val p = cam.project(Vec3(lerp(spot.a.x, spot.b.x, t), lerp(spot.a.y, spot.b.y, t), lerp(spot.a.z, spot.b.z, t)))
+                WashDisc(Vec2(p.x, p.y), lerp(spot.ra, spot.rb, t) * p.scale, weight)
+            }
         }
     }
 
@@ -122,9 +228,10 @@ internal class Painter(private val cam: Camera, private val opts: RenderOptions)
                 if (prim != null) entries += Entry(key, -1e6f, prim)
             }
         }
+        val fills = hostFills.getOrPut(g.id) { mutableListOf() }
         for (p in g.parts) {
             val near = nearOf(p.shape) + p.bias
-            project(p, Layer.FILL, 0f, tone, key)?.let { entries += Entry(key, near, it) }
+            project(p, Layer.FILL, 0f, tone, key)?.let { entries += Entry(key, near, it); fills += it }
             if (p.shine) project(p, Layer.SHINE, 0f, tone, key)?.let { entries += Entry(key, near + 1e-3f, it) }
         }
     }
@@ -143,7 +250,7 @@ internal class Painter(private val cam: Camera, private val opts: RenderOptions)
                         Vec2(p.x + lx * s.r * 0.30f * p.scale, p.y + ly * s.r * 0.30f * p.scale),
                         s.r * 0.46f * p.scale, m, layer, depth, tone, a,
                     )
-                    else -> DiscPrim(Vec2(p.x, p.y), r, m, layer, depth, tone, a)
+                    else -> DiscPrim(Vec2(p.x, p.y), r, m, layer, depth, tone, a, part.flat)
                 }
             }
             is Tube3 -> {
@@ -152,14 +259,14 @@ internal class Painter(private val cam: Camera, private val opts: RenderOptions)
                 val ra = (s.ra + grow) * pa.scale
                 val rb = (s.rb + grow) * pb.scale
                 if (layer != Layer.SHINE) {
-                    CapsulePrim(Vec2(pa.x, pa.y), Vec2(pb.x, pb.y), ra, rb, m, layer, depth, tone, a)
+                    CapsulePrim(Vec2(pa.x, pa.y), Vec2(pb.x, pb.y), ra, rb, m, layer, depth, tone, a, part.flat)
                 } else {
                     shineCapsule(pa, pb, s.ra * pa.scale, s.rb * pb.scale, m, depth, tone, a)
                 }
             }
             is Ellip3 -> {
                 val p = cam.project(s.c)
-                ellipse(s, p, grow, if (layer == Layer.SHINE) 0.5f else 1f, layer, m, depth, tone, a)
+                ellipse(s, p, grow, if (layer == Layer.SHINE) 0.5f else 1f, layer, m, depth, tone, a, part.flat)
             }
         }
     }
@@ -188,7 +295,7 @@ internal class Painter(private val cam: Camera, private val opts: RenderOptions)
 
     private fun ellipse(
         s: Ellip3, p: Projected, grow: Float, factor: Float, layer: Layer,
-        m: Material, depth: Float, tone: Float, alpha: Float,
+        m: Material, depth: Float, tone: Float, alpha: Float, flat: Boolean = false,
     ): Prim {
         fun grown(v: Vec3): Vec3 {
             val l = v.length()
@@ -218,6 +325,6 @@ internal class Painter(private val cam: Camera, private val opts: RenderOptions)
             cx += lx * r * 0.55f
             cy += ly * r * 0.55f
         }
-        return EllipsePrim(Vec2(cx, cy), rx, ry, angle, m, layer, depth, tone, alpha)
+        return EllipsePrim(Vec2(cx, cy), rx, ry, angle, m, layer, depth, tone, alpha, flat)
     }
 }

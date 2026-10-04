@@ -45,31 +45,31 @@ internal object FigureBuilder {
 
     private fun torso(sk: Skeleton): Group3 {
         val parts = mutableListOf<Part3>()
-        // Pelvis in shorts, then a smooth tank-top torso built from overlapping slices (waist narrows, chest widens).
+        // Pelvis in shorts with a waistband, then a smooth tank-top torso built from overlapping slices
+        // (waist narrows, chest widens into a V). The pieces are flat; the group is shaded as a whole.
         parts += Part3(
             Ellip3(sk.hip + sk.lowUp * 3.5f, sk.lowSide * 14.6f, sk.lowUp * 10.5f, sk.lowFront * 11.0f),
-            Material.SHORTS, shine = false, bias = -60f,
+            Material.SHORTS, shine = false, bias = -60f, flat = true,
         )
-        val slices = 11
+        val slices = 17
         for (i in 0 until slices) {
-            val t = 0.20f + 0.70f * i / (slices - 1)
+            val t = 0.22f + 0.70f * i / (slices - 1)
             val k = i / (slices - 1).toFloat()
-            val c = lerp(sk.hip, sk.mid, 0f).let { _ ->
-                // Follow the two-segment spine: first segment hip -> mid, second mid -> shoulder.
-                if (t < 0.5f) lerp(sk.hip, sk.mid, t / 0.5f) else lerp(sk.mid, sk.shoulder, (t - 0.5f) / 0.5f)
-            }
+            // Follow the two-segment spine: first segment hip -> mid, second mid -> shoulder.
+            val c = if (t < 0.5f) lerp(sk.hip, sk.mid, t / 0.5f) else lerp(sk.mid, sk.shoulder, (t - 0.5f) / 0.5f)
             val upv = if (t < 0.5f) sk.lowUp else sk.up
             val fr = if (t < 0.5f) sk.lowFront else sk.front
             val sd = if (t < 0.5f) sk.lowSide else sk.side
-            val rx = 12.4f + 3.8f * k
-            val rz = 9.6f + 2.2f * k
-            parts += Part3(Ellip3(c, sd * rx, upv * 9.0f, fr * rz), Material.SHIRT, shine = i == slices - 1, bias = -30f + i * 0.5f)
+            val taper = k * k * (3f - 2f * k)
+            val rx = 11.8f + 5.2f * taper
+            val rz = 9.2f + 3.0f * kotlin.math.sin(k * 2.2f)
+            parts += Part3(Ellip3(c, sd * rx, upv * 6.2f, fr * rz), Material.SHIRT, shine = false, bias = -30f + i * 0.5f, flat = true)
         }
-        // Trapezius slope from the neck to each shoulder.
+        // The trapezius slope from the neck to each shoulder.
         val neckBase = sk.shoulder + sk.up * 1.5f
-        parts += Part3(Tube3(neckBase, sk.shoulderL + Vec3(1.5f, -1.2f, 0f), 4.4f, 3.8f), Material.SKIN, shine = false, bias = -10f)
-        parts += Part3(Tube3(neckBase, sk.shoulderR + Vec3(-1.5f, -1.2f, 0f), 4.4f, 3.8f), Material.SKIN, shine = false, bias = -10f)
-        return Group3("torso", parts)
+        parts += Part3(Tube3(neckBase, sk.shoulderL + Vec3(1.5f, -1.2f, 0f), 4.4f, 3.8f), Material.SKIN, shine = false, bias = -10f, flat = true)
+        parts += Part3(Tube3(neckBase, sk.shoulderR + Vec3(-1.5f, -1.2f, 0f), 4.4f, 3.8f), Material.SKIN, shine = false, bias = -10f, flat = true)
+        return Group3("torso", parts, spine = Triple(sk.hip, sk.shoulder, 15.5f))
     }
 
     private fun head(sk: Skeleton, cam: Camera): List<Group3> {
@@ -79,37 +79,54 @@ internal object FigureBuilder {
         val hs = sk.headSide
         val parts = mutableListOf<Part3>()
         // Neck.
-        parts += Part3(Tube3(sk.shoulder + sk.up * 1.0f, c - faceUp * 7.5f, 4.6f, 4.2f), Material.SKIN, shine = false, bias = -10f)
+        parts += Part3(Tube3(sk.shoulder + sk.up * 1.0f, c - faceUp * 7.5f, 5.0f, 4.5f), Material.SKIN, shine = false, bias = -10f)
         // Skull and jaw.
         parts += Part3(Ellip3(c, hs * 7.9f, faceUp * 10.2f, faceFront * 9.4f), Material.SKIN)
-        parts += Part3(Ellip3(c - faceUp * 4.2f + faceFront * 1.6f, hs * 6.2f, faceUp * 5.4f, faceFront * 7.2f), Material.SKIN, shine = false)
-        // Ears, nose, eyes: they sit on the surface, so depth sorting hides them on the far side.
-        for (s in listOf(-1f, 1f)) {
-            parts += Part3(Sphere3(c + hs * (7.8f * s) - faceFront * 0.6f - faceUp * 0.4f, 1.7f), Material.SKIN, shine = false)
-            parts += Part3(Sphere3(c + hs * (3.1f * s) + faceFront * 8.5f + faceUp * 2.2f, 0.95f), Material.EYE, shine = false, bias = 2f)
-        }
-        parts += Part3(Sphere3(c + faceFront * 9.6f - faceUp * 0.9f, 1.6f), Material.SKIN, shine = false, bias = 1f)
-        val out = mutableListOf(Group3("head", parts))
-
-        // Hair: behind the skull from the front, over its back and top from the side.
-        val hairParts = listOf(
-            Part3(Ellip3(c + faceUp * 1.9f - faceFront * 2.9f, hs * 8.1f, faceUp * 10.3f, faceFront * 7.4f), Material.HAIR, shine = false),
+        parts += Part3(Ellip3(c - faceUp * 4.2f + faceFront * 1.6f, hs * 6.4f, faceUp * 5.4f, faceFront * 7.2f), Material.SKIN, shine = false)
+        // Hair: a fringe over the top of the forehead (always over the skull), and a back cap that sits behind the
+        // skull when the face is toward the camera and over it from the side and the back.
+        val frontOn = cam.toCamera.dot(faceFront) > 0.55f
+        parts += Part3(
+            Ellip3(c + faceUp * 8.7f + faceFront * 0.3f, hs * 8.2f, faceUp * 3.3f, faceFront * 8.3f),
+            Material.HAIR, shine = false, bias = 6f,
         )
-        val toCamera = cam.toCamera
-        val frontOn = toCamera.dot(faceFront) > 0.35f
-        out += Group3("hair", hairParts, relativeTo = "head", rel = if (frontOn) -0.004f else 0.004f, outlineScale = 0.8f)
-        return out
+        parts += Part3(
+            Ellip3(c + faceUp * 1.9f - faceFront * 2.9f, hs * 8.3f, faceUp * 10.5f, faceFront * 7.6f),
+            Material.HAIR, shine = false, bias = if (frontOn) -20f else 5f,
+        )
+        // Ears, eyes, brows, nose, mouth: they sit on the surface, so depth sorting hides them on the far side.
+        for (s in listOf(-1f, 1f)) {
+            parts += Part3(Sphere3(c + hs * (7.7f * s) - faceFront * 0.4f - faceUp * 1.2f, 1.8f), Material.SKIN, shine = false, bias = 7f)
+            parts += Part3(Ellip3(c + hs * (3.2f * s) + faceFront * 8.2f + faceUp * 1.6f, hs * 1.55f, faceUp * 1.05f, faceFront * 0.7f), Material.EYE_WHITE, shine = false, bias = 9f)
+            parts += Part3(Sphere3(c + hs * (3.2f * s) + faceFront * 8.8f + faceUp * 1.6f, 0.8f), Material.EYE, shine = false, bias = 10f)
+            parts += Part3(
+                Tube3(
+                    c + hs * (1.7f * s) + faceFront * 8.4f + faceUp * 4.0f,
+                    c + hs * (4.9f * s) + faceFront * 7.8f + faceUp * 4.5f, 0.45f, 0.4f,
+                ),
+                Material.HAIR, shine = false, bias = 9f,
+            )
+        }
+        parts += Part3(Sphere3(c + faceFront * 9.3f - faceUp * 1.2f, 1.25f), Material.SKIN, shine = false, bias = 8f)
+        parts += Part3(
+            Tube3(c + hs * (-1.9f) + faceFront * 8.2f - faceUp * 4.4f, c + hs * 1.9f + faceFront * 8.2f - faceUp * 4.4f, 0.5f, 0.5f),
+            Material.LIP, shine = false, bias = 9f,
+        )
+        return listOf(Group3("head", parts))
     }
 
     // ------------------------------------------------------------------ limbs
 
     private fun arm(id: String, shoulder: Vec3, elbow: Vec3, wrist: Vec3): Group3 {
+        val belly = lerp(shoulder, elbow, 0.42f)
+        val forearm = lerp(elbow, wrist, 0.22f)
         val parts = listOf(
-            Part3(Sphere3(shoulder, 5.3f), Material.SKIN),
-            Part3(Tube3(shoulder, elbow, 4.6f, 3.6f), Material.SKIN),
-            Part3(Sphere3(elbow, 3.5f), Material.SKIN, shine = false),
-            Part3(Tube3(elbow, wrist, 3.7f, 2.5f), Material.SKIN),
-            Part3(along(elbow, wrist, 0.3f, 8.5f, 4.0f), Material.SKIN, shine = false),
+            Part3(Sphere3(shoulder, 5.7f), Material.SKIN),
+            Part3(Tube3(shoulder, belly, 5.4f, 5.0f), Material.SKIN),
+            Part3(Tube3(belly, elbow, 5.0f, 3.7f), Material.SKIN),
+            Part3(Sphere3(elbow, 3.7f), Material.SKIN, shine = false),
+            Part3(Tube3(elbow, forearm, 3.7f, 3.9f), Material.SKIN),
+            Part3(Tube3(forearm, wrist, 3.9f, 2.5f), Material.SKIN),
         )
         return Group3(id, parts)
     }
@@ -118,12 +135,12 @@ internal object FigureBuilder {
         val mid = lerp(hip, knee, 0.5f)
         val back = frontNormal(knee, ankle) * -1.4f
         val parts = listOf(
-            Part3(Tube3(mid, knee, 6.6f, 5.1f), Material.SKIN, shine = false),
-            Part3(Sphere3(knee, 5.1f), Material.SKIN, shine = false),
+            Part3(Tube3(mid, knee, 6.9f, 5.2f), Material.SKIN, shine = false),
+            Part3(Sphere3(knee, 5.2f), Material.SKIN, shine = false),
             Part3(Tube3(knee, ankle, 4.9f, 3.1f), Material.SKIN),
-            Part3(along(knee, ankle, 0.3f, 9.5f, 4.4f, back), Material.SKIN, shine = false),
+            Part3(along(knee, ankle, 0.3f, 9.5f, 4.6f, back), Material.SKIN, shine = false),
             Part3(Sphere3(ankle, 3.1f), Material.SKIN, shine = false),
-            Part3(Tube3(hip, mid, 8.0f, 6.8f), Material.SHORTS, bias = 20f),
+            Part3(Tube3(hip, mid, 8.2f, 7.1f), Material.SHORTS, bias = 20f),
         )
         return Group3(id, parts)
     }

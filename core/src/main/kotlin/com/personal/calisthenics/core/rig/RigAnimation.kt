@@ -136,6 +136,7 @@ object RigFraming {
                     is EllipsePrim -> { val r = maxOf(prim.rx, prim.ry); include(prim.c.x, prim.c.y, r) }
                     is PolyPrim -> prim.points.forEach { include(it.x, it.y, 0f) }
                     is LinePrim -> { include(prim.a.x, prim.a.y, 0f); include(prim.b.x, prim.b.y, 0f) }
+                    is WashPrim -> Unit // clipped to body parts that are already counted
                 }
             }
         }

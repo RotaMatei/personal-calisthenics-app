@@ -44,7 +44,8 @@ object RigRenderer {
         val painter = Painter(camera, options)
         val groups = mutableListOf<Group3>()
         groups += FigureBuilder.body(pose, sk, scene, camera)
-        groups += HighlightShapes.groups(highlights, sk, camera, options.xray)
+        val washes = HighlightShapes.washes(highlights, sk, camera, options.xray) +
+            if (options.definition) Anatomy.washes(sk, camera) else emptyList()
         if (scene.band) groups += bandGroups(pose, sk)
 
         if (scene.floor) painter.raw(-1e9f, floorPrims(scene, camera))
@@ -55,6 +56,7 @@ object RigRenderer {
             }
         }
         painter.add(groups)
+        painter.addWashes(washes)
         return painter.finish()
     }
 

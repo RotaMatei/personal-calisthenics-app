@@ -26,9 +26,9 @@ object AppColors {
     val Danger = Color(0xFFFF6B6B)
 
     // Anatomical highlight colours from the spec.
-    val Muscle = Color(0xFFFF4D4D)
-    val Tendon = Color(0xFF4D8DFF)
-    val Joint = Color(0xFFFFE04D)
+    val Muscle = Color(0xFFD9707F)
+    val Tendon = Color(0xFF4FB8AC)
+    val Joint = Color(0xFFDCC48E)
 }
 
 private val Scheme = darkColorScheme(

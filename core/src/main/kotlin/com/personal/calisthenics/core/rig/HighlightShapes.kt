@@ -114,30 +114,31 @@ internal object HighlightShapes {
         }
     }
 
-    /** A patch with a soft edge: a wide faint halo, a mid layer and a small strong core, blended together. */
-    private fun softPatch(shape: Shape3, material: Material, alpha: Float): List<Part3> = listOf(
-        Part3(shape.scaled(1.22f), material, shine = false, alpha = alpha * 0.35f),
-        Part3(shape, material, shine = false, alpha = alpha * 0.55f),
-        Part3(shape.scaled(0.62f), material, shine = false, alpha = alpha * 0.8f),
-    )
-
     fun material(kind: HighlightKind): Material = when (kind) {
         HighlightKind.MUSCLE -> Material.MUSCLE
         HighlightKind.TENDON -> Material.TENDON
         HighlightKind.JOINT -> Material.JOINT
     }
 
+    /** How much wider than the anatomical patch the soft wash spreads, per kind (tendon and joint patches are small). */
+    private fun spread(kind: HighlightKind): Float = when (kind) {
+        HighlightKind.MUSCLE -> 1.9f
+        HighlightKind.TENDON -> 2.6f
+        HighlightKind.JOINT -> 1.8f
+    }
+
+    /** Peak opacity of a wash: a faint hue at rest, still gentle at full load (the figure stays readable). */
+    fun peakAlpha(intensity: Float): Float = 0.12f + 0.46f * intensity.coerceIn(0f, 1f)
+
     /**
-     * Highlight groups for [draws]. A patch facing the camera is drawn right after its host part; a patch on the
-     * far side is drawn before it (so the host hides it) and optionally repeated faintly on top as an x-ray hint.
+     * Soft hue washes for [draws]. A patch facing the camera is a wash right after its host body part; one on the
+     * far side is only shown as a faint see-through wash (if [xray]) because the body hides it.
      */
-    fun groups(draws: List<HighlightDraw>, sk: Skeleton, cam: Camera, xray: Boolean): List<Group3> {
-        val out = mutableListOf<Group3>()
-        var n = 0
+    fun washes(draws: List<HighlightDraw>, sk: Skeleton, cam: Camera, xray: Boolean): List<Wash3> {
+        val out = mutableListOf<Wash3>()
         for (d in draws) {
             val material = material(d.kind)
-            // Overall opacity grows with load x phase; faint, minor or off-peak highlights stay clearly lighter.
-            val alpha = 0.10f + 0.70f * d.intensity.coerceIn(0f, 1f)
+            val alpha = peakAlpha(d.intensity)
             for (h in shapes(d.region, sk)) {
                 val centre = when (val s = h.shape) {
                     is Sphere3 -> s.c
@@ -145,26 +146,9 @@ internal object HighlightShapes {
                     is Ellip3 -> s.c
                 }
                 val facing = (centre - h.axis).dot(cam.toCamera)
-                val near = facing >= -0.05f
-                val id = "hl.${n++}"
-                out += Group3(
-                    id,
-                    softPatch(h.shape, material, alpha),
-                    outline = false,
-                    relativeTo = h.host,
-                    rel = if (near) 0.003f else -0.003f,
-                    depthCue = false,
-                )
-                if (xray && !near) {
-                    out += Group3(
-                        "$id.x",
-                        softPatch(h.shape, material, alpha * 0.4f),
-                        outline = false,
-                        relativeTo = Painter.TOP,
-                        rel = 0f,
-                        depthCue = false,
-                    )
-                }
+                val spot = h.shape.scaled(spread(d.kind))
+                if (facing >= -0.05f) out += Wash3(h.host, listOf(spot), material, alpha)
+                else if (xray) out += Wash3(h.host, listOf(spot), material, alpha * 0.55f, onTop = true)
             }
         }
         return out

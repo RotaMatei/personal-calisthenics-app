@@ -44,6 +44,7 @@ class ClipTest {
                 for (prim in frame.prims) {
                     if (prim.material in RigRenderer.groundMaterials) continue
                     val c = when (prim) {
+                        is com.personal.calisthenics.core.rig.WashPrim -> prim.discs.first().c
                         is com.personal.calisthenics.core.rig.DiscPrim -> prim.c
                         is com.personal.calisthenics.core.rig.CapsulePrim -> prim.a
                         is com.personal.calisthenics.core.rig.EllipsePrim -> prim.c

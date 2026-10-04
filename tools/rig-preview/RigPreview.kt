@@ -13,7 +13,13 @@ import com.personal.calisthenics.core.rig.EllipsePrim
 import com.personal.calisthenics.core.rig.HighlightDraw
 import com.personal.calisthenics.core.rig.Keyframe
 import com.personal.calisthenics.core.rig.LinePrim
+import com.personal.calisthenics.core.rig.Layer
+import com.personal.calisthenics.core.rig.LinearShade
 import com.personal.calisthenics.core.rig.Palette
+import com.personal.calisthenics.core.rig.RadialShade
+import com.personal.calisthenics.core.rig.Shading
+import com.personal.calisthenics.core.rig.Vec2
+import com.personal.calisthenics.core.rig.WashPrim
 import com.personal.calisthenics.core.rig.Pose
 import com.personal.calisthenics.core.rig.PolyPrim
 import com.personal.calisthenics.core.rig.Prim
@@ -61,10 +67,31 @@ object RigPreview {
         return Color(argb, true)
     }
 
+    private fun awtColor(argb: Int) = Color(argb, true)
+
+    /** Gradient (or flat) paint for a FILL primitive, mirroring the Compose renderer. */
+    private fun paintOf(p: Prim, frame: Frame, ox: Int, oy: Int): java.awt.Paint {
+        val shade = Shading.shadeOf(p) ?: return colorOf(p)
+        fun px(v: Vec2) = java.awt.geom.Point2D.Float(ox + frame.x(v.x), oy + frame.y(v.y))
+        val colors = shade.colors.map { awtColor(it) }.toTypedArray()
+        val fractions = floatArrayOf(0f, 0.5f, 1f)
+        return when (shade) {
+            is LinearShade -> {
+                val a = px(shade.from)
+                val b = px(shade.to)
+                if (a.distance(b) < 1.0) colorOf(p) else java.awt.LinearGradientPaint(a, b, fractions, colors)
+            }
+            is RadialShade -> {
+                val r = frame.r(shade.radius)
+                if (r < 1f) colorOf(p) else java.awt.RadialGradientPaint(px(shade.centre), r, fractions, colors)
+            }
+        }
+    }
+
     private fun draw(g: Graphics2D, prims: List<Prim>, frame: Frame, ox: Int, oy: Int) {
         val saved = g.transform
         for (p in prims) {
-            g.color = colorOf(p)
+            g.paint = paintOf(p, frame, ox, oy)
             when (p) {
                 is DiscPrim -> {
                     val r = frame.r(p.r).toDouble()
@@ -73,11 +100,10 @@ object RigPreview {
                 is EllipsePrim -> {
                     val cx = ox + frame.x(p.c.x).toDouble()
                     val cy = oy + frame.y(p.c.y).toDouble()
-                    g.transform = AffineTransform(saved).also { it.rotate(-Math.toRadians(p.angleDeg.toDouble()), cx, cy) }
                     val rx = frame.r(p.rx).toDouble()
                     val ry = frame.r(p.ry).toDouble()
-                    g.fill(Ellipse2D.Double(cx - rx, cy - ry, 2 * rx, 2 * ry))
-                    g.transform = saved
+                    val rot = AffineTransform.getRotateInstance(-Math.toRadians(p.angleDeg.toDouble()), cx, cy)
+                    g.fill(rot.createTransformedShape(Ellipse2D.Double(cx - rx, cy - ry, 2 * rx, 2 * ry)))
                 }
                 is PolyPrim -> {
                     val path = Path2D.Double()
@@ -122,9 +148,39 @@ object RigPreview {
                         g.fill(path)
                     }
                 }
+                is WashPrim -> drawWash(g, p, frame, ox, oy)
             }
         }
         g.transform = saved
+    }
+
+    /** Soft gradient discs clipped to the host body part's outline. */
+    private fun drawWash(g: Graphics2D, p: WashPrim, frame: Frame, ox: Int, oy: Int) {
+        val clip = Path2D.Double(Path2D.WIND_NON_ZERO)
+        for (poly in p.clip) {
+            poly.forEachIndexed { i, v ->
+                val x = ox + frame.x(v.x).toDouble()
+                val y = oy + frame.y(v.y).toDouble()
+                if (i == 0) clip.moveTo(x, y) else clip.lineTo(x, y)
+            }
+            clip.closePath()
+        }
+        val oldClip = g.clip
+        g.clip(clip)
+        val rgb = Palette.argb(p.material, Layer.FILL, 1f, 1f) and 0xFFFFFF
+        for (d in p.discs) {
+            val cx = ox + frame.x(d.c.x)
+            val cy = oy + frame.y(d.c.y)
+            val r = frame.r(d.r)
+            if (r < 1f) continue
+            val a = (p.alpha * d.weight).coerceIn(0f, 1f)
+            fun c(k: Float) = Color((rgb or (((a * k * 255f + 0.5f).toInt()) shl 24)), true)
+            g.paint = java.awt.RadialGradientPaint(
+                java.awt.geom.Point2D.Float(cx, cy), r, floatArrayOf(0f, 0.35f, 0.7f, 1f), arrayOf(c(1f), c(0.62f), c(0.22f), c(0f)),
+            )
+            g.fill(Ellipse2D.Double((cx - r).toDouble(), (cy - r).toDouble(), 2.0 * r, 2.0 * r))
+        }
+        g.clip = oldClip
     }
 
     /** One labelled DO/DON'T picture: body plus arrow callouts. */
