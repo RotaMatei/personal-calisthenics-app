@@ -21,6 +21,8 @@ class ClipFrame(
     /** 0 at Position A, 1 at Position B. */
     val progress: Float,
     val camera: Camera,
+    /** Name of the movement part being played (e.g. "Shoulders" in the joint-circles clip); null for plain clips. */
+    val caption: String? = null,
 )
 
 /**
@@ -44,7 +46,7 @@ class ClipPlayer(
         val progress = animation.progressAt(timeMs)
         val draws = highlights.toDraws(progress)
         val prims = RigRenderer.render(animation.scene, animation.poseAt(timeMs), camera, draws, options)
-        return ClipFrame(prims, progress, camera)
+        return ClipFrame(prims, progress, camera, animation.captionAt(timeMs))
     }
 
     /**
@@ -74,6 +76,8 @@ fun RigAnimation.scaledToLoop(targetLoopMs: Long): RigAnimation {
     val k = targetLoopMs.toDouble() / loopMs
     return RigAnimation(
         scene,
-        keyframes.map { Keyframe(it.pose, (it.holdMs * k).toLong().coerceAtLeast(1L), (it.moveMs * k).toLong().coerceAtLeast(1L)) },
+        keyframes.map {
+            Keyframe(it.pose, (it.holdMs * k).toLong().coerceAtLeast(1L), (it.moveMs * k).toLong().coerceAtLeast(1L), it.label, it.flow)
+        },
     )
 }

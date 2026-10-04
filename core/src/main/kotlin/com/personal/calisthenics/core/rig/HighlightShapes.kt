@@ -34,7 +34,7 @@ internal object HighlightShapes {
         val front = sk.front
         val up = sk.up
         fun torso(t: Float) = lerp(sk.hip, sk.shoulder, t)
-        val x = Vec3(1f, 0f, 0f)
+        val x = sk.side
 
         fun side(f: (Float) -> Hosted): List<Hosted> = listOf(f(-1f), f(1f))
         fun armId(s: Float) = if (s < 0) "armL" else "armR"

@@ -62,7 +62,7 @@ The user tested the app on a phone: it runs and moves smoothly, but it needs the
 Claim rule: an interactive session started on these at 2026-10-04 09:35 (Europe/Bucharest). A scheduled run should skip
 milestones marked `(claimed)` unless `git log origin/main -1` is more than 2 hours old, then take over the first unchecked one.
 
-- [ ] M15 (claimed) **Rig animation fixes.** (a) Elbows do not bend in the pull-up clip, and the same is true for every
+- [x] M15 **Rig animation fixes** (DONE 2026-10-04: pull-up pole fixed; Pose has headRoll/headTurn/sideLean/sideFlex; joint_circles is a 30 s clip of five 6 s captioned parts; `RigMotionTest` guards bend-direction flips, elbow flexion, pull-up elbow below hand, all five captions; the clip caption is drawn by `ClipView`; session screens must drive the clip from drill time so it matches the 5 sub-labels, see M19). (a) Elbows do not bend in the pull-up clip, and the same is true for every
       exercise where the elbows should flex (pull-ups, chin-ups, Australian pull-ups, dips, push-up variants, pike and
       pseudo-planche push-ups, ...). Audit every exercise's keyframes, make the elbow angle really change between Position A
       and B, and add a test that fails when a bending-elbow exercise has no elbow flexion. (b) Warm-up/drill clips that cover
@@ -70,7 +70,9 @@ milestones marked `(claimed)` unless `git log origin/main -1` is more than 2 hou
       play every rotation in turn, with the current joint named on screen.
 - [ ] M16 (claimed) **Visual quality of the 3D figure.** (a) Targeted joints and muscles must NOT be painted as yellow or red
       blobs. Show the tension as a soft hue wash over the model's body surface instead (graded intensity, still pulsing with
-      the movement phase, still matched to the real stress of that exact exercise per M5c). (b) Make the figure more realistic:
+      the movement phase, still matched to the real stress of that exact exercise per M5c). USER DECISION (2026-10-04): three
+      muted hues as a gentle wash over the body, soft rose = muscle, soft teal = tendon, soft sand = joint (no saturated
+      red/yellow/blue, no blobs on joints). (b) Make the figure more realistic:
       better shading and proportions, muscle definition, clothing, face and hair. Limit: it is rendered by our own Canvas
       painter (no 3D engine, no downloadable models in this workspace), so "realistic" means as far as that allows.
 - [ ] M17 (claimed) **UI redesign.** The UI feels cluttered and badly spaced. Redo all four tabs with a consistent spacing scale,
@@ -81,10 +83,17 @@ milestones marked `(claimed)` unless `git log origin/main -1` is more than 2 hou
       the correct position; pressing it extends a drawer-like panel that shows the looping 3D video instead, with the reps
       and the description under it. The Start button lives on this page.
 - [ ] M19 (claimed) **Rep-exercise player screen.** For every exercise counted in reps (no duration), the whole screen shows the
-      3D video and a Next button sits at the bottom. (Open question for the user: keep the tempo beeps/vibration running
-      behind this screen? See the answer recorded below once given.)
+      3D video and a Next button sits at the bottom. USER DECISIONS (2026-10-04): this applies to strength sets (Phase 2)
+      only; warm-up/decompression drills keep their timers and 10 s transitions. Tempo beeps and vibration KEEP running on
+      this screen (the clip loops at the set's tempo), Next ends the set and leads to a one-tap pre-filled reps/RIR log, then rest.
 - [ ] M20 (claimed) **New logo.** A better, more suitable app icon (adaptive launcher icon plus the notification icon) that
       fits calisthenics and tendon health. Keep it simple and readable at small sizes.
+- Root causes found 2026-10-04 (for M15, all fixed; the 'snap' numbers below were partly fast real motion, the test now checks the bend direction instead): (1) pull-up elbow flips: the fixed elbow "pole" (BACK_DOWN) throws the elbow up
+  and behind the head during the ascent (elbow above the wrist at t~1.3-1.6 s) and then snaps below it; need a per-pose,
+  body-relative elbow direction that cannot flip, plus a continuity test (`tools` probe: max per-10 ms jump, elbows of
+  strict_pullups 7.1 cm, joint_circles 11.7 cm, jumping_jacks 7.5 cm, banded_dislocates 3.1 cm). (2) joint_circles is a
+  single arm-swing loop; the Pose model has no neck roll/turn, hip circle or ankle circle, so those must be added and the
+  clip sequenced through all five rotations (neck half circles, shoulders, elbows, hips, ankles) with a caption.
 - [ ] M21 Re-audit against these requirements and `docs/SPEC.md`, update tests and README, CI green, new debug APK artifact.
 
 ## Auto-resume

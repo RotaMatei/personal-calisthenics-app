@@ -98,10 +98,16 @@ internal object BarRigs {
         )
     }
 
+    /**
+     * Elbow direction for pulling movements: down, slightly forward and out. With the torso behind the bar this keeps
+     * the elbow below the hand for the whole rep (the old back-and-down pole threw it up behind the head mid-rep).
+     */
+    private val pullPole = PoleSpec(0.35f, -0.75f, 0.55f)
+
     private fun strictPullups(): ExerciseRig {
-        val bottom = hang(straightCenter(-2f), -2f)
-        val top = hang(224f, -3f, centerZ = -24f, lean = -14f, head = -2f, look = 8f, legs = { Kit.legsBent(it) })
-        val wrong = hang(212f, 7f, centerZ = -16f, lean = -6f, head = 30f, look = 24f, legs = { Kit.legsBent(it) })
+        val bottom = hang(straightCenter(-2f), -2f, pole = pullPole)
+        val top = hang(224f, -3f, centerZ = -24f, lean = -14f, head = -2f, look = 8f, pole = pullPole, legs = { Kit.legsBent(it) })
+        val wrong = hang(212f, 7f, centerZ = -16f, lean = -6f, head = 30f, look = 24f, pole = pullPole, legs = { Kit.legsBent(it) })
         return ExerciseRig(
             RigAnimation(pullScene, listOf(kf(bottom, 600, 1500), kf(top, 400, 1000))),
             mapOf(

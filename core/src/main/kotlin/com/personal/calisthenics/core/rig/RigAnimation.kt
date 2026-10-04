@@ -3,8 +3,19 @@ package com.personal.calisthenics.core.rig
 import kotlin.math.PI
 import kotlin.math.cos
 
-/** One resting keyframe: hold [holdMs] in [pose], then move to the next keyframe over [moveMs]. */
-data class Keyframe(val pose: Pose, val holdMs: Long = 500L, val moveMs: Long = 1200L)
+/**
+ * One resting keyframe: hold [holdMs] in [pose], then move to the next keyframe over [moveMs]. A [label] names the
+ * part of a multi-part clip that starts at this keyframe (for example the joint being circled); it is shown as a
+ * caption until the next label. With [flow] the move is linear instead of easing in and out, so a chain of
+ * keyframes along a circle plays as one continuous sweep without stopping at every keyframe.
+ */
+data class Keyframe(
+    val pose: Pose,
+    val holdMs: Long = 500L,
+    val moveMs: Long = 1200L,
+    val label: String? = null,
+    val flow: Boolean = false,
+)
 
 /**
  * A looping exercise demonstration: a scene plus an ordered, cyclic list of keyframes. A typical rep is
@@ -27,11 +38,42 @@ class RigAnimation(val scene: RigScene, val keyframes: List<Keyframe>) {
             t -= k.holdMs
             if (t < k.moveMs) {
                 val next = keyframes[(i + 1) % keyframes.size]
-                return k.pose.lerpTo(next.pose, ease(t.toFloat() / k.moveMs))
+                val u = t.toFloat() / k.moveMs
+                return k.pose.lerpTo(next.pose, if (k.flow) u else ease(u))
             }
             t -= k.moveMs
         }
         return keyframes.first().pose
+    }
+
+    /** The distinct captions of this clip in playing order (empty when no keyframe has a label). */
+    val captions: List<String> = keyframes.mapNotNull { it.label }.distinct()
+
+    /**
+     * Caption to show at [timeMs]: the label of the part being played, switching halfway through the move into the
+     * next labelled keyframe. Null when the clip has no labels.
+     */
+    fun captionAt(timeMs: Long): String? {
+        if (captions.isEmpty()) return null
+        var t = ((timeMs % loopMs) + loopMs) % loopMs
+        var active = 0
+        for (i in keyframes.indices) {
+            val k = keyframes[i]
+            if (t < k.holdMs) { active = i; break }
+            t -= k.holdMs
+            if (t < k.moveMs) {
+                active = if (t * 2 >= k.moveMs) (i + 1) % keyframes.size else i
+                break
+            }
+            t -= k.moveMs
+        }
+        // The label in force is the most recent one at or before the active keyframe (wrapping around the loop).
+        var i = active
+        repeat(keyframes.size) {
+            keyframes[i].label?.let { return it }
+            i = (i - 1 + keyframes.size) % keyframes.size
+        }
+        return null
     }
 
     /** First keyframe, handy for static previews. */

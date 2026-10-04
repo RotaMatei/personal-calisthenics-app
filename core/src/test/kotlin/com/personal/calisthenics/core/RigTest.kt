@@ -98,7 +98,9 @@ class RigTest {
     fun animationsLoopSeamlesslyAndStayFinite() {
         for (e in SeedData.exercises) {
             val anim: RigAnimation = RigLibrary.animation(e.id)
-            assertTrue("${e.id} loop length", anim.loopMs in 1200L..20000L)
+            // Multi-part clips (joint circles) run several movements back to back and are allowed to be longer.
+            val maxLoop = if (anim.captions.isNotEmpty()) 60_000L else 20_000L
+            assertTrue("${e.id} loop length", anim.loopMs in 1200L..maxLoop)
             val a = anim.poseAt(0)
             val b = anim.poseAt(anim.loopMs)
             assertEquals("${e.id} seam", a.anchor, b.anchor)

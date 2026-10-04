@@ -1,5 +1,9 @@
 package com.personal.calisthenics.core.rig
 
+import kotlin.math.asin
+import kotlin.math.cos
+import kotlin.math.sin
+
 /** Standing warm-up drills: jumping jacks, joint circles, band dislocates and band pull-aparts. */
 internal object PrepRigs {
 
@@ -43,17 +47,128 @@ internal object PrepRigs {
 
     // ------------------------------------------------------------------ joint circles
 
+    /** Each part of the joint-circles clip lasts this long, so the five parts split the drill into equal slots. */
+    const val CIRCLE_PART_MS = 6000L
+
+    private val shoulderY = Kit.STAND_HIP_Y + Kit.TORSO
+    private const val ARM_R = 55f
+
+    /** Standing pose with the pelvis shifted by ([dx], [dz]) while the shoulders stay over the feet (hip circles). */
+    private fun shifted(
+        dx: Float,
+        dz: Float,
+        hands: (dx: Float, dz: Float) -> Pair<Limb, Limb>,
+        feet: Pair<Limb, Limb> = sym(9f, Kit.ANKLE_FLAT, 0f, Poles.FWD, 0f, true),
+        head: Float = 0f,
+    ): Pose {
+        val side = -Math.toDegrees(asin(dx / Body.TORSO_LOWER.toDouble())).toFloat()
+        val lean = -Math.toDegrees(asin(dz / Body.TORSO_LOWER.toDouble())).toFloat()
+        // The tilted pelvis lifts one hip joint, so sink it just enough that both planted legs still reach the floor.
+        fun build(y: Float) = pose(
+            anchorAt = Anchor.HIP, anchor = Vec3(dx, y, dz), lean = lean, spineFlex = -lean,
+            headTilt = head, sideLean = side, sideFlex = -side, hands = hands(dx, dz), feet = feet,
+        )
+        var y = Kit.STAND_HIP_Y
+        var result = build(y)
+        repeat(8) {
+            val errors = RigSolver.solve(result).reachError
+            val err = maxOf(errors.getValue(LimbId.FOOT_L), errors.getValue(LimbId.FOOT_R))
+            if (err < 0.05f) return result
+            y -= err + 0.1f
+            result = build(y)
+        }
+        return result
+    }
+
+    /** Both fists on the hips, elbows out and slightly back; the hands travel with the pelvis. */
+    private fun handsOnHips(dx: Float, dz: Float): Pair<Limb, Limb> {
+        val y = Kit.STAND_HIP_Y + 4f
+        val pole = Vec3(0.7f, 0f, -0.7f)
+        return Limb(Vec3(-17f + dx, y, 2f + dz), Vec3(-pole.x, pole.y, pole.z), 0f, false, 0f, 0f, HandShape.FIST) to
+            Limb(Vec3(17f + dx, y, 2f + dz), pole, 0f, false, 0f, 0f, HandShape.FIST)
+    }
+
+    /** Both arms straight and pointing [theta] degrees round the shoulder: 0 up, 90 forward, 180 down, 270 back. */
+    private fun armsAt(theta: Float): Pair<Limb, Limb> {
+        val t = Math.toRadians(theta.toDouble())
+        val y = shoulderY + ARM_R * cos(t).toFloat()
+        val z = ARM_R * sin(t).toFloat()
+        val pole = Vec3(0f, -sin(t).toFloat(), cos(t).toFloat())
+        fun one(x: Float, p: Vec3) = Limb(Vec3(x, y, z), p, theta - 90f, false, 0f, 0f, HandShape.OPEN)
+        return one(-Body.SHOULDER_HALF - 1f, pole) to one(Body.SHOULDER_HALF + 1f, pole)
+    }
+
+    /** Fingertips on the shoulders, so the elbow swings round on a circle; [phi] 0 = elbows forward, 90 = up. */
+    private fun elbowCircle(phi: Float): Pair<Limb, Limb> {
+        val t = Math.toRadians(phi.toDouble())
+        val pole = Vec3(0f, sin(t).toFloat(), cos(t).toFloat())
+        val y = shoulderY + 3f
+        val reach = Body.SHOULDER_HALF + 7f
+        return Limb(Vec3(-reach, y, 0f), pole, 0f, false, 0f, 0f, HandShape.RELAXED) to
+            Limb(Vec3(reach, y, 0f), pole, 0f, false, 0f, 0f, HandShape.RELAXED)
+    }
+
+    /** One foot off the floor with the toe tracing a circle: pitch swings up and down, yaw in and out. */
+    private fun liftedFoot(left: Boolean, phi: Float): Pair<Limb, Limb> {
+        val t = Math.toRadians(phi.toDouble())
+        val x = 9f
+        val flat = sym(x, Kit.ANKLE_FLAT, 0f, Poles.FWD, 0f, true)
+        val lifted = Limb(
+            Vec3(if (left) -x else x, 18f, 14f), Vec3(0f, 0f, 1f),
+            22f + 36f * cos(t).toFloat(), false, 28f * sin(t).toFloat(),
+        )
+        return if (left) lifted to flat.second else flat.first to lifted
+    }
+
+    private fun circleAngles(step: Float = 45f): List<Float> {
+        val n = (360f / step).toInt()
+        val forward = (0 until n).map { it * step }
+        val back = (n - 1 downTo 1).map { it * step }
+        return forward + listOf(360f) + back + listOf(0f)
+    }
+
+    /** One captioned part: poses evenly share [CIRCLE_PART_MS]; moves ease at the indices in [easeAt], else flow. */
+    private fun part(label: String, poses: List<Pose>, easeAt: Set<Int> = emptySet(), allEase: Boolean = false): List<Keyframe> {
+        val each = CIRCLE_PART_MS / poses.size
+        val lastMs = CIRCLE_PART_MS - each * (poses.size - 1)
+        return poses.mapIndexed { i, p ->
+            val last = i == poses.lastIndex
+            Keyframe(p, 0L, if (last) lastMs else each, if (i == 0) label else null, flow = !(allEase || last || i in easeAt))
+        }
+    }
+
     private fun jointCircles(): ExerciseRig {
-        val front = sym(22f, 146f, 46f, Poles.UP, -10f)
-        val frontL = front.first
-        val frontR = front.second
-        val backDown = sym(24f, 100f, -28f, Poles.BACK, 100f)
-        val a = Kit.standing(hands = Limb(frontL.target, frontL.pole, -10f) to Limb(backDown.second.target, backDown.second.pole, 100f))
-        val b = Kit.standing(hands = Limb(backDown.first.target, backDown.first.pole, 100f) to Limb(frontR.target, frontR.pole, -10f), head = 8f)
+        val neutral = Kit.standing(hands = armsDown)
+        // 1. Neck half circles: ear to right shoulder, down through the chin, ear to left shoulder, and back.
+        fun neck(roll: Float, tilt: Float) = Kit.standing(hands = armsDown, head = tilt, headRoll = roll)
+        val neckPoses = listOf(
+            neck(0f, 0f), neck(30f, 0f), neck(22f, 22f), neck(0f, 32f), neck(-22f, 22f), neck(-30f, 0f),
+            neck(-22f, 22f), neck(0f, 32f), neck(22f, 22f), neck(30f, 0f),
+        )
+        // 2. Shoulder circles with straight arms: a full circle forwards, then a full circle backwards.
+        val shoulderAngles = (0..12).map { 180f - 30f * it } + (13..24).map { -180f + 30f * (it - 12) }
+        val shoulderPoses = shoulderAngles.map { Kit.standing(hands = armsAt(it)) }
+        // 3. Elbow circles with the fingertips on the shoulders.
+        val elbowPoses = circleAngles().map { Kit.standing(hands = elbowCircle(it + 180f)) }
+        // 4. Hip circles: the pelvis draws a circle while the shoulders stay put; one way, then the other.
+        val hipPoses = circleAngles().map {
+            val t = Math.toRadians(it.toDouble())
+            shifted(9f * cos(t).toFloat(), 9f * sin(t).toFloat(), ::handsOnHips)
+        }
+        // 5. Ankle circles: right foot, then left foot.
+        fun ankle(left: Boolean, phi: Float) = shifted(if (left) 3f else -3f, 0f, ::handsOnHips, liftedFoot(left, phi))
+        val anklePoses = (0 until 8).map { ankle(false, it * 45f) } + (0 until 8).map { ankle(true, it * 45f) }
+
+        val frames = part("Neck (half circles)", neckPoses, allEase = true) +
+            part("Shoulders", shoulderPoses, easeAt = setOf(11, 12)) +
+            part("Elbows", elbowPoses, easeAt = setOf(7, 8)) +
+            part("Hips", hipPoses, easeAt = setOf(7, 8)) +
+            part("Ankles", anklePoses, easeAt = setOf(7))
+
         val wrong = Kit.standing(hands = armsDown, head = -32f, look = 38f)
         val right = Kit.standing(hands = armsDown, head = 6f)
         return ExerciseRig(
-            RigAnimation(floor, listOf(kf(a, 200, 1200), kf(b, 200, 1200))),
+            RigAnimation(floor, frames),
             mapOf(
                 "joint_circles.wrong_neck_hyperextend" to RigStill(floor, wrong),
                 "joint_circles.right_neck_neutral" to RigStill(floor, right),

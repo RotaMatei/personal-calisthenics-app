@@ -61,6 +61,10 @@ data class Skeleton(
     val lowUp: Vec3,
     val lowFront: Vec3,
     val headUp: Vec3,
+    /** Lateral (figure's right) axes of the upper torso, the pelvis and the head; +x when the body is not side-leaning. */
+    val side: Vec3,
+    val lowSide: Vec3,
+    val headSide: Vec3,
     /** Distance between the requested limb target and where the limb actually ended. */
     val reachError: Map<LimbId, Float>,
 )
@@ -68,9 +72,14 @@ data class Skeleton(
 object RigSolver {
 
     fun solve(pose: Pose): Skeleton {
-        val lowUp = upDir(pose.lean)
+        val lowTilt = pose.sideLean
+        val upperTilt = pose.sideLean + pose.sideFlex
+        val headSideTilt = upperTilt + pose.headRoll
+        val lowUp = tiltSide(upDir(pose.lean), lowTilt)
         val upperAngle = pose.lean + pose.spineFlex
-        val upperUp = upDir(upperAngle)
+        val upperUp = tiltSide(upDir(upperAngle), upperTilt)
+        val lowSide = tiltSide(Vec3(1f, 0f, 0f), lowTilt)
+        val upperSide = tiltSide(Vec3(1f, 0f, 0f), upperTilt)
 
         val hip: Vec3
         val mid: Vec3
@@ -84,12 +93,19 @@ object RigSolver {
             mid = hip + lowUp * Body.TORSO_LOWER
             shoulder = mid + upperUp * Body.TORSO_UPPER
         }
-        val headCenter = shoulder + upDir(upperAngle + pose.headTilt) * (Body.NECK + Body.HEAD_RADIUS)
+        val headCenter = shoulder + tiltSide(upDir(upperAngle + pose.headTilt), headSideTilt) * (Body.NECK + Body.HEAD_RADIUS)
+        // Head frame: pitch (headTilt, look), then side tilt, then a turn of the face about the head's own up axis.
+        val headUp0 = tiltSide(upDir(upperAngle + pose.headTilt - pose.look), headSideTilt)
+        val headFront0 = tiltSide(frontDir(upperAngle + pose.headTilt - pose.look), headSideTilt)
+        val headSide0 = tiltSide(Vec3(1f, 0f, 0f), headSideTilt)
+        val turn = rad(pose.headTurn)
+        val faceDir = headFront0 * kotlin.math.cos(turn) + headSide0 * kotlin.math.sin(turn)
+        val headSide = headSide0 * kotlin.math.cos(turn) - headFront0 * kotlin.math.sin(turn)
 
-        val shoulderL = shoulder + Vec3(-Body.SHOULDER_HALF, pose.shrug, 0f)
-        val shoulderR = shoulder + Vec3(Body.SHOULDER_HALF, pose.shrug, 0f)
-        val hipL = hip + Vec3(-Body.HIP_HALF, 0f, 0f)
-        val hipR = hip + Vec3(Body.HIP_HALF, 0f, 0f)
+        val shoulderL = shoulder - upperSide * Body.SHOULDER_HALF + Vec3(0f, pose.shrug, 0f)
+        val shoulderR = shoulder + upperSide * Body.SHOULDER_HALF + Vec3(0f, pose.shrug, 0f)
+        val hipL = hip - lowSide * Body.HIP_HALF
+        val hipR = hip + lowSide * Body.HIP_HALF
 
         val armL = twoBone(shoulderL, pose.handL.target, pose.handL.pole, Body.UPPER_ARM, Body.FOREARM)
         val armR = twoBone(shoulderR, pose.handR.target, pose.handR.pole, Body.UPPER_ARM, Body.FOREARM)
@@ -114,11 +130,14 @@ object RigSolver {
             heelL = heel(legL.end, pose.footL.pitch), heelR = heel(legR.end, pose.footR.pitch),
             toeL = toe(legL.end, pose.footL.pitch), toeR = toe(legR.end, pose.footR.pitch),
             up = upperUp,
-            front = frontDir(upperAngle),
-            faceDir = frontDir(upperAngle + pose.headTilt - pose.look),
+            front = tiltSide(frontDir(upperAngle), upperTilt),
+            faceDir = faceDir,
             lowUp = lowUp,
-            lowFront = frontDir(pose.lean),
-            headUp = upDir(upperAngle + pose.headTilt - pose.look),
+            lowFront = tiltSide(frontDir(pose.lean), lowTilt),
+            headUp = headUp0,
+            side = upperSide,
+            lowSide = lowSide,
+            headSide = headSide,
             reachError = mapOf(
                 LimbId.HAND_L to armL.error,
                 LimbId.HAND_R to armR.error,
@@ -126,6 +145,14 @@ object RigSolver {
                 LimbId.FOOT_R to legR.error,
             ),
         )
+    }
+
+    /** Rotates [v] about the z axis so that straight up leans toward +x by [deg] degrees. */
+    private fun tiltSide(v: Vec3, deg: Float): Vec3 {
+        if (deg == 0f) return v
+        val c = kotlin.math.cos(rad(deg))
+        val s = kotlin.math.sin(rad(deg))
+        return Vec3(v.x * c + v.y * s, -v.x * s + v.y * c, v.z)
     }
 
     private data class Chain(val mid: Vec3, val end: Vec3, val error: Float)

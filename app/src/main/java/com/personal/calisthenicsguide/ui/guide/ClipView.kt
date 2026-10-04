@@ -109,6 +109,16 @@ fun ClipView(exerciseId: String, highlights: List<Highlight>, modifier: Modifier
                 val bounds = fixedBounds ?: player.boundsAnyYaw
                 drawPrims(frame.prims, ViewFit(bounds, size.width, size.height, pad = 8f))
             }
+            // Multi-part clips (joint circles) name the part being played: Neck, Shoulders, Elbows, Hips, Ankles.
+            val caption = animation.captionAt(timeMs)
+            if (caption != null) {
+                Text(
+                    caption,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.align(Alignment.TopCenter).padding(12.dp),
+                )
+            }
             Text(
                 if (view == ClipView.ORBIT) "Drag to rotate" else "Tap Play/Pause to freeze",
                 color = AppColors.TextSecondary,

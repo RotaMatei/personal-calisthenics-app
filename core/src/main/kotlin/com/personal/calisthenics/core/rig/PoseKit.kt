@@ -105,11 +105,16 @@ internal object Kit {
         head: Float = 0f,
         shrug: Float = 0f,
         look: Float = 0f,
+        headRoll: Float = 0f,
+        headTurn: Float = 0f,
+        sideLean: Float = 0f,
+        sideFlex: Float = 0f,
         hands: Pair<Limb, Limb>,
         feet: Pair<Limb, Limb> = sym(9f, ANKLE_FLAT, 0f, Poles.FWD, 0f, true),
     ) = pose(
         anchorAt = Anchor.HIP, anchor = hip, lean = lean, spineFlex = flex, headTilt = head, shrug = shrug,
-        look = look, hands = hands, feet = feet,
+        look = look, headRoll = headRoll, headTurn = headTurn, sideLean = sideLean, sideFlex = sideFlex,
+        hands = hands, feet = feet,
     )
 
     /** Pose anchored at the shoulder centre. */

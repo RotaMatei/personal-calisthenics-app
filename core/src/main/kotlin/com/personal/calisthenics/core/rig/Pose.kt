@@ -45,6 +45,14 @@ data class Pose(
     val footR: Limb,
     /** Extra face rotation in degrees: positive looks up (chin up), negative looks down. Does not move the head. */
     val look: Float = 0f,
+    /** Side tilt of the head in degrees (ear toward the shoulder): positive tilts toward the figure's right (+x). */
+    val headRoll: Float = 0f,
+    /** Turn of the head about the neck in degrees: positive turns the face toward the figure's right (+x). */
+    val headTurn: Float = 0f,
+    /** Side lean of the lower spine in degrees (positive toward +x), used by hip circles and side bends. */
+    val sideLean: Float = 0f,
+    /** Extra side lean of the upper spine on top of [sideLean]. */
+    val sideFlex: Float = 0f,
 ) {
     fun lerpTo(other: Pose, t: Float): Pose {
         require(anchorAt == other.anchorAt) { "Cannot blend poses with different anchors" }
@@ -60,6 +68,10 @@ data class Pose(
             blend(footL, other.footL, t),
             blend(footR, other.footR, t),
             lerp(look, other.look, t),
+            lerp(headRoll, other.headRoll, t),
+            lerp(headTurn, other.headTurn, t),
+            lerp(sideLean, other.sideLean, t),
+            lerp(sideFlex, other.sideFlex, t),
         )
     }
 
@@ -100,9 +112,16 @@ fun pose(
     headTilt: Float = 0f,
     shrug: Float = 0f,
     look: Float = 0f,
+    headRoll: Float = 0f,
+    headTurn: Float = 0f,
+    sideLean: Float = 0f,
+    sideFlex: Float = 0f,
     hands: Pair<Limb, Limb>,
     feet: Pair<Limb, Limb>,
-) = Pose(anchorAt, anchor, lean, spineFlex, headTilt, shrug, hands.first, hands.second, feet.first, feet.second, look)
+) = Pose(
+    anchorAt, anchor, lean, spineFlex, headTilt, shrug, hands.first, hands.second, feet.first, feet.second, look,
+    headRoll, headTurn, sideLean, sideFlex,
+)
 
 /** Common pole directions. */
 object Poles {

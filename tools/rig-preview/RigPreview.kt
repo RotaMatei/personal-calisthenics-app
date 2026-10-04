@@ -230,6 +230,44 @@ object RigPreview {
             println("wrote big_$id.png")
             return
         }
+        if (args.size >= 3 && args[1] == "strip") {
+            // strip <id> [frames] [yaw pitch ...]: filmstrip of one full loop of the clip, one row per camera.
+            val id = args[2]
+            val anim = RigLibrary.animation(id)
+            val frames = args.getOrNull(3)?.toIntOrNull() ?: 10
+            val camArgs = args.drop(4)
+            val cams = if (camArgs.size >= 2) camArgs.chunked(2).filter { it.size == 2 }.map { Camera(yaw = it[0].toFloat(), pitch = it[1].toFloat(), perspective = 0.3f) }
+            else listOf(Camera.SIDE, Camera.FRONT)
+            val w = 240
+            val h = 330
+            val img = BufferedImage(w * frames, h * cams.size, BufferedImage.TYPE_INT_RGB)
+            val g = img.createGraphics()
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+            val hlAll = SeedData.exerciseOrNull(id)?.highlights.orEmpty()
+            cams.forEachIndexed { row, cam ->
+                val bounds = RigFraming.bounds(anim, cam)
+                for (i in 0 until frames) {
+                    val from = System.getenv("STRIP_FROM")?.toLongOrNull() ?: 0L
+                    val to = System.getenv("STRIP_TO")?.toLongOrNull() ?: anim.loopMs
+                    val t = from + (to - from) * i / frames
+                    val frame = Frame(bounds, w, h, padX = 4f, top = 20f, bottom = 4f)
+                    val ox = i * w
+                    val oy = row * h
+                    g.color = Color(0x11, 0x13, 0x18)
+                    g.fillRect(ox, oy, w - 1, h - 1)
+                    g.clip = java.awt.Rectangle(ox, oy, w - 1, h - 1)
+                    draw(g, RigRenderer.render(anim.scene, anim.poseAt(t), cam, hlAll.toDraws(anim.progressAt(t))), frame, ox, oy)
+                    g.clip = null
+                    g.color = Color.WHITE
+                    g.font = Font("SansSerif", Font.PLAIN, 12)
+                    g.drawString("t=${t}ms ${anim.captionAt(t).orEmpty()}", ox + 6, oy + 14)
+                }
+            }
+            g.dispose()
+            ImageIO.write(img, "png", File(outDir, "strip_$id.png"))
+            println("wrote strip_$id.png")
+            return
+        }
         val ids = if (args.size < 2 || args[1] == "all") SeedData.exercises.map { it.id } else args.drop(1)
         for (id in ids) {
             val exercise = SeedData.exerciseOrNull(id)
